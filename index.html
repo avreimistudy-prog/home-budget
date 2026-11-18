@@ -25,9 +25,9 @@
       <div class="flex items-center gap-2">
         <label class="cursor-pointer bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-3 py-2 rounded-lg shadow-sm flex items-center gap-1 transition">
           <span>📥 ייבוא קובץ</span>
-          <input type="file" id="fileUploadInput" accept=".xlsx,.xls,.csv,.txt" class="hidden" onchange="handleFileUpload(event)" />
+          <input type="file" id="fileUploadInput" accept=".xlsx,.xls,.csv,.txt,.html" class="hidden" onchange="handleFileUpload(event)" />
         </label>
-        <button onclick="resetAllData()" title="איפוס נתונים" class="bg-rose-50 hover:bg-rose-100 text-rose-600 text-xs font-semibold px-2.5 py-2 rounded-lg border border-rose-200 transition">
+        <button onclick="resetAllData()" title="איפוס נתונים ל-0" class="bg-rose-50 hover:bg-rose-100 text-rose-600 text-xs font-semibold px-2.5 py-2 rounded-lg border border-rose-200 transition">
           🗑️ איפוס
         </button>
       </div>
@@ -118,7 +118,7 @@
 
       <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 flex justify-between items-center">
         <button onclick="exportCSV()" class="bg-slate-800 text-white text-xs font-semibold px-4 py-2.5 rounded-xl">📤 ייצוא לאקסל (CSV)</button>
-        <button onclick="resetAllData()" class="bg-rose-600 text-white text-xs font-semibold px-4 py-2.5 rounded-xl">🗑️ איפוס מלא</button>
+        <button onclick="resetAllData()" class="bg-rose-600 text-white text-xs font-semibold px-4 py-2.5 rounded-xl">🗑️ איפוס מלא ל-0</button>
       </div>
     </section>
 
@@ -236,14 +236,14 @@
 
   <script>
     const CATEGORIES = [
-      { id: 'food', name: 'מזון וסופר', icon: '🛒', defaultBudget: 2500 },
-      { id: 'dining', name: 'אוכל בחוץ', icon: '☕', defaultBudget: 700 },
-      { id: 'transport', name: 'תחבורה ורכב', icon: '⛽', defaultBudget: 1000 },
-      { id: 'kids', name: 'ילדים וחינוך', icon: '🧸', defaultBudget: 800 },
-      { id: 'health', name: 'בריאות ופארם', icon: '💊', defaultBudget: 400 },
-      { id: 'clothing', name: 'ביגוד והנעלה', icon: '👕', defaultBudget: 500 },
-      { id: 'leisure', name: 'פנאי ומתנות', icon: '🎁', defaultBudget: 500 },
-      { id: 'other', name: 'שונות / בלתי צפוי', icon: '📦', defaultBudget: 600 }
+      { id: 'food', name: 'מזון וסופר', icon: '🛒', defaultBudget: 0 },
+      { id: 'dining', name: 'אוכל בחוץ', icon: '☕', defaultBudget: 0 },
+      { id: 'transport', name: 'תחבורה ורכב', icon: '⛽', defaultBudget: 0 },
+      { id: 'kids', name: 'ילדים וחינוך', icon: '🧸', defaultBudget: 0 },
+      { id: 'health', name: 'בריאות ופארם', icon: '💊', defaultBudget: 0 },
+      { id: 'clothing', name: 'ביגוד והנעלה', icon: '👕', defaultBudget: 0 },
+      { id: 'leisure', name: 'פנאי ומתנות', icon: '🎁', defaultBudget: 0 },
+      { id: 'other', name: 'שונות / בלתי צפוי', icon: '📦', defaultBudget: 0 }
     ];
 
     const BUILTIN_KEYWORDS = {
@@ -256,17 +256,17 @@
       leisure: ['סינמה', 'יס פלאנט', 'הופעה', 'מתנה', 'פרחים', 'ספא', 'מלון', 'טיול']
     };
 
-    const STORAGE_KEY = 'smart_budget_v3';
+    const STORAGE_KEY = 'smart_budget_v4';
     let currentYear = new Date().getFullYear();
     let currentMonth = new Date().getMonth();
     let selectedQuickCat = 'food';
     let pendingImportRows = [];
     let rawSheetRows = [];
 
-    function getDefaultState() {
+    function getEmptyState() {
       const catBudgets = {};
-      CATEGORIES.forEach(c => catBudgets[c.id] = c.defaultBudget);
-      return { income: 15000, fixed: 8000, catBudgets, transactions: [], learnedRules: {} };
+      CATEGORIES.forEach(c => catBudgets[c.id] = 0);
+      return { income: 0, fixed: 0, catBudgets, transactions: [], learnedRules: {} };
     }
 
     let state = loadState();
@@ -274,10 +274,10 @@
     function loadState() {
       try {
         const raw = localStorage.getItem(STORAGE_KEY);
-        if (!raw) return getDefaultState();
-        return { ...getDefaultState(), ...JSON.parse(raw) };
+        if (!raw) return getEmptyState();
+        return { ...getEmptyState(), ...JSON.parse(raw) };
       } catch (e) {
-        return getDefaultState();
+        return getEmptyState();
       }
     }
 
@@ -286,8 +286,9 @@
     }
 
     function resetAllData() {
-      if (confirm('האם לאפס את כל הנתונים והתנועות ולהתחיל מדף חלק?')) {
-        state = getDefaultState();
+      if (confirm('האם לאפס את כל הנתונים והתנועות ל-0 ולהתחיל מדף חלק?')) {
+        localStorage.clear();
+        state = getEmptyState();
         saveState();
         renderAll();
       }
@@ -542,7 +543,7 @@
       renderAll();
     }
 
-    // --- ROBUST FILE IMPORT ---
+    // --- UNIVERSAL ISRAELI BANK/CARD FILE PARSER ---
     function classifyMerchant(merchantName) {
       const clean = merchantName.trim().toLowerCase();
       if (state.learnedRules[clean]) return state.learnedRules[clean];
@@ -569,28 +570,46 @@
       return getMonthKey(currentYear, currentMonth) + '-01';
     }
 
+    function extractHtmlTableRows(buffer) {
+      let text = new TextDecoder('utf-8').decode(buffer);
+      if (!text.includes('תאריך') && !text.includes('סכום') && !text.includes('עסק')) {
+        text = new TextDecoder('windows-1255').decode(buffer);
+      }
+      const doc = new DOMParser().parseFromString(text, 'text/html');
+      const trs = Array.from(doc.querySelectorAll('tr'));
+      return trs.map(tr => Array.from(tr.querySelectorAll('th, td')).map(td => td.textContent.trim()));
+    }
+
     function handleFileUpload(event) {
       const file = event.target.files[0];
       if (!file) return;
-      if (typeof XLSX === 'undefined') {
-        alert('ספריית קריאת האקסל עדיין נטענת, נסה שוב בעוד 2 שניות.');
-        return;
-      }
       const reader = new FileReader();
       reader.onload = function(e) {
+        const buffer = e.target.result;
+        let rows = [];
         try {
-          const data = new Uint8Array(e.target.result);
-          const workbook = XLSX.read(data, { type: 'array', codepage: 1255 });
-          const sheet = workbook.Sheets[workbook.SheetNames[0]];
-          rawSheetRows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
-          if (!rawSheetRows || rawSheetRows.length === 0) {
-            alert('הקובץ שנבחר ריק.');
-            return;
+          if (typeof XLSX !== 'undefined') {
+            const data = new Uint8Array(buffer);
+            const workbook = XLSX.read(data, { type: 'array', codepage: 1255 });
+            const sheet = workbook.Sheets[workbook.SheetNames[0]];
+            rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
           }
-          autoDetectAndParse(rawSheetRows);
         } catch (err) {
-          alert('לא ניתן לקרוא קובץ זה ישירות. טיפ: פתח אותו באקסל ושמור כ-CSV UTF-8 או XLSX רגיל.');
+          rows = [];
         }
+
+        if (!rows || rows.length < 2) {
+          rows = extractHtmlTableRows(buffer);
+        }
+
+        if (!rows || rows.length === 0) {
+          alert('לא נמצאו שורות נתונים בקובץ.');
+          event.target.value = '';
+          return;
+        }
+
+        rawSheetRows = rows;
+        autoDetectAndParse(rawSheetRows);
         event.target.value = '';
       };
       reader.readAsArrayBuffer(file);
@@ -600,7 +619,8 @@
       let headerIdx = -1;
       let dateCol = -1, nameCol = -1, amountCol = -1;
 
-      for (let i = 0; i < Math.min(rows.length, 30); i++) {
+      for (let i = 0; i < Math.min(rows.length, 35); i++) {
+        if (!Array.isArray(rows[i])) continue;
         const row = rows[i].map(c => String(c || '').trim());
         const dIdx = row.findIndex(c => c.includes('תאריך'));
         const nIdx = row.findIndex(c => c.includes('בית עסק') || c.includes('שם העסק') || c.includes('תיאור') || c.includes('פרטים') || c.includes('פעולה') || c.includes('עסק'));
@@ -624,7 +644,7 @@
 
     function openManualColumnMapper(rows) {
       document.getElementById('rawRowsCount').textContent = rows.length;
-      const sampleRow = rows.find(r => r.filter(x => String(x).trim() !== '').length >= 2) || rows[0];
+      const sampleRow = rows.find(r => Array.isArray(r) && r.filter(x => String(x).trim() !== '').length >= 2) || rows[0];
       const optionsHtml = sampleRow.map((cell, idx) => `<option value="${idx}">עמודה ${idx + 1} (לדוגמה: "${String(cell).slice(0, 22)}")</option>`).join('');
       document.getElementById('mapDateCol').innerHTML = optionsHtml;
       document.getElementById('mapNameCol').innerHTML = optionsHtml;
