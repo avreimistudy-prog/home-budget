@@ -162,7 +162,6 @@
         <button onclick="closeAddModal()" class="text-slate-400 hover:text-slate-600 text-xl font-bold">✕</button>
       </div>
 
-      <!-- Expense vs Income Toggle -->
       <div class="grid grid-cols-2 gap-2 bg-slate-100 p-1 rounded-xl text-xs font-bold">
         <button type="button" id="btnTypeExpense" onclick="setQuickTxType('expense')" class="py-2 rounded-lg bg-white text-slate-800 shadow-sm transition">➖ הוצאה</button>
         <button type="button" id="btnTypeIncome" onclick="setQuickTxType('income')" class="py-2 rounded-lg text-slate-500 transition">➕ הכנסה (משכורת / קצבה)</button>
@@ -304,7 +303,7 @@
     </div>
   </div>
 
-  <!-- Column Mapper Fallback Modal -->
+  <!-- Column Mapper Fallback Modal (Updated with Credit Column!) -->
   <div id="columnMapModal" class="fixed inset-0 bg-black/60 z-50 hidden flex items-center justify-center p-4">
     <div class="bg-white w-full max-w-md rounded-2xl p-5 space-y-4">
       <div class="flex justify-between items-center border-b pb-2">
@@ -322,15 +321,19 @@
           <select id="mapNameCol" class="w-full border rounded-lg p-2 bg-slate-50"></select>
         </div>
         <div>
-          <label class="font-bold block mb-1">עמודת סכום (חובה):</label>
-          <select id="mapAmountCol" class="w-full border rounded-lg p-2 bg-slate-50"></select>
+          <label class="font-bold block mb-1 text-rose-700">עמודת חובה (הוצאות):</label>
+          <select id="mapDebitCol" class="w-full border rounded-lg p-2 bg-slate-50"></select>
+        </div>
+        <div>
+          <label class="font-bold block mb-1 text-emerald-700">עמודת זכות (הכנסות - אם קיימת בנפרד):</label>
+          <select id="mapCreditCol" class="w-full border rounded-lg p-2 bg-slate-50"></select>
         </div>
       </div>
       <button onclick="applyManualColumnMapping()" class="w-full bg-blue-600 text-white font-bold py-3 rounded-xl text-sm">המשך לניתוח הנתונים</button>
     </div>
   </div>
 
-  <!-- Import Query Modal (Live Progress + Auto-Dismiss Assigned Rows) -->
+  <!-- Import Query Modal -->
   <div id="importModal" class="fixed inset-0 bg-black/60 z-50 hidden flex items-center justify-center p-4">
     <div class="bg-white w-full max-w-md rounded-2xl p-5 max-h-[88vh] flex flex-col">
       <div class="flex justify-between items-center pb-2.5 border-b">
@@ -341,7 +344,6 @@
         <button onclick="closeImportModal()" class="text-slate-400 hover:text-slate-600 text-xl font-bold">✕</button>
       </div>
 
-      <!-- Psychological Progress Bar -->
       <div class="bg-slate-50 p-3 rounded-xl border border-slate-200/80 mt-2.5 space-y-1.5">
         <div class="flex justify-between items-center text-xs">
           <span id="importProgressLabel" class="font-extrabold text-slate-800">נותרו 0 תנועות למיון</span>
@@ -407,7 +409,7 @@
       leisure: ['סינמה', 'יס פלאנט', 'הופעה', 'מתנה', 'פרחים', 'ספא', 'מלון', 'טיול']
     };
 
-    const STORAGE_KEY = 'smart_budget_v7';
+    const STORAGE_KEY = 'smart_budget_v8';
     let currentYear = new Date().getFullYear();
     let currentMonth = new Date().getMonth();
     let selectedQuickCat = 'food';
@@ -673,7 +675,6 @@
       }).join('');
     }
 
-    // --- EDIT TRANSACTION MODAL ---
     function openEditTxModal(txId) {
       const tx = state.transactions.find(t => t.id === txId);
       if (!tx) return;
@@ -890,7 +891,7 @@
       renderAll();
     }
 
-    // --- SMART MULTI-MONTH FILE IMPORT (EXPENSES + INCOMES) ---
+    // --- ROBUST DEBIT + CREDIT FILE PARSER ---
     function classifyTransaction(merchantName, amount, isCreditColumn) {
       const clean = merchantName.trim().toLowerCase();
       const amountSig = `${clean}_${amount}`;
@@ -979,8 +980,8 @@
         const row = rows[i].map(c => String(c || '').trim());
         const dIdx = row.findIndex(c => c.includes('תאריך'));
         const nIdx = row.findIndex(c => c.includes('בית עסק') || c.includes('שם העסק') || c.includes('תיאור') || c.includes('פרטים') || c.includes('פעולה') || c.includes('עסק'));
-        const debIdx = row.findIndex(c => c.includes('סכום חיוב') || c.includes('סכום עסקה') || c.includes('חובה') || c.includes('סכום בש') || c === 'סכום');
-        const credIdx = row.findIndex(c => c.includes('זכות'));
+        const debIdx = row.findIndex(c => c.includes('חובה') || c.includes('סכום חיוב') || c.includes('סכום עסקה') || c.includes('סכום בש') || c === 'סכום');
+        const credIdx = row.findIndex(c => c.includes('זכות') || c.includes('זיכוי') || c.includes('הכנסה') || c.includes('הפקדה'));
 
         if (nIdx !== -1 && (debIdx !== -1 || credIdx !== -1)) {
           headerIdx = i;
@@ -1006,25 +1007,35 @@
       const optionsHtml = sampleRow.map((cell, idx) => `<option value="${idx}">עמודה ${idx + 1} (לדוגמה: "${String(cell).slice(0, 22)}")</option>`).join('');
       document.getElementById('mapDateCol').innerHTML = optionsHtml;
       document.getElementById('mapNameCol').innerHTML = optionsHtml;
-      document.getElementById('mapAmountCol').innerHTML = optionsHtml;
+      document.getElementById('mapDebitCol').innerHTML = optionsHtml;
+      document.getElementById('mapCreditCol').innerHTML = `<option value="-1">-- אין עמודת זכות נפרדת --</option>` + optionsHtml;
+
       if (sampleRow.length > 1) document.getElementById('mapNameCol').value = '1';
-      if (sampleRow.length > 2) document.getElementById('mapAmountCol').value = '2';
+      if (sampleRow.length > 2) document.getElementById('mapDebitCol').value = '2';
+      if (sampleRow.length > 3) document.getElementById('mapCreditCol').value = '3';
       document.getElementById('columnMapModal').classList.remove('hidden');
     }
 
     function applyManualColumnMapping() {
       const dCol = Number(document.getElementById('mapDateCol').value);
       const nCol = Number(document.getElementById('mapNameCol').value);
-      const aCol = Number(document.getElementById('mapAmountCol').value);
+      const debCol = Number(document.getElementById('mapDebitCol').value);
+      const credCol = Number(document.getElementById('mapCreditCol').value);
       document.getElementById('columnMapModal').classList.add('hidden');
-      processRowsWithColumns(rawSheetRows, 0, dCol, nCol, aCol, -1);
+      processRowsWithColumns(rawSheetRows, 0, dCol, nCol, debCol, credCol);
     }
 
     function parseAmountVal(cell) {
-      if (cell === undefined || cell === null || cell === '') return 0;
-      const str = String(cell).replace(/[^\d.\-]/g, '');
+      if (cell === undefined || cell === null) return 0;
+      let str = String(cell).trim();
+      if (!str || str === '-' || str === '0' || str === '0.00') return 0;
+      // טיפול במינוס בסוף המספר (נפוץ בבנקים בישראל, למשל 150.00-)
+      let isNeg = false;
+      if (str.endsWith('-') || str.startsWith('-')) isNeg = true;
+      str = str.replace(/[^\d.]/g, '');
       const val = parseFloat(str);
-      return isNaN(val) ? 0 : val;
+      if (isNaN(val)) return 0;
+      return isNeg ? -val : val;
     }
 
     function processRowsWithColumns(rows, startIdx, dateCol, nameCol, debitCol, creditCol) {
@@ -1039,15 +1050,17 @@
         let isCredit = false;
 
         if (creditCol !== -1) {
-          const debVal = parseAmountVal(r[debitCol]);
-          const credVal = parseAmountVal(r[creditCol]);
+          const debVal = Math.abs(parseAmountVal(r[debitCol]));
+          const credVal = Math.abs(parseAmountVal(r[creditCol]));
           if (credVal > 0 && debVal === 0) {
             amount = credVal;
             isCredit = true;
-          } else {
-            amount = Math.abs(debVal);
+          } else if (debVal > 0) {
+            amount = debVal;
+            isCredit = false;
           }
         } else {
+          // אם יש עמודת סכום אחת בלבד: מספר חיובי עם סימן + או זכות, או שלילי
           const rawVal = parseAmountVal(r[debitCol]);
           amount = Math.abs(rawVal);
         }
@@ -1141,7 +1154,7 @@
       const target = pendingImportRows.find(r => r.id === rowId);
       if (!target) return;
       target.category = catId;
-      target.resolved = true; // מסיר מיד מרשימת הממתינים למיון
+      target.resolved = true;
 
       const cleanMerchant = target.merchant.trim().toLowerCase();
       const sameMerchantRows = pendingImportRows.filter(r =>
