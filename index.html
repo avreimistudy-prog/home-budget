@@ -5,9 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>תקציב ביתי חכם</title>
   <link rel="manifest" href="./manifest.json" />
-  <meta name="theme-color" content="#2563eb" />
+  <meta name="theme-color" content="#0f172a" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="תקציב חכם" />
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
@@ -16,30 +16,30 @@
   <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
   <style>
     body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; -webkit-tap-highlight-color: transparent; }
-    .tab-active { color: #2563eb; border-top: 3px solid #2563eb; font-weight: 700; }
-    .dark .tab-active { color: #60a5fa; border-top-color: #60a5fa; }
-    .tab-inactive { color: #64748b; border-top: 3px solid transparent; }
+    .tab-active { color: #2563eb; font-weight: 800; }
+    .dark .tab-active { color: #60a5fa; }
+    .tab-inactive { color: #64748b; }
     .dark .tab-inactive { color: #94a3b8; }
   </style>
 </head>
-<body class="pb-24 bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 select-none transition-colors duration-200">
+<body class="pb-24 bg-slate-100/80 dark:bg-slate-950 text-slate-800 dark:text-slate-100 select-none transition-colors duration-200">
 
-  <!-- Top Header (Clean Single-Row Mobile Layout) -->
-  <header class="bg-white dark:bg-slate-900 shadow-sm dark:border-b dark:border-slate-800 sticky top-0 z-30 px-3.5 py-2.5">
+  <!-- Top Header -->
+  <header class="bg-white/95 dark:bg-slate-900/95 backdrop-blur border-b border-slate-200/70 dark:border-slate-800 sticky top-0 z-30 px-4 py-3">
     <div class="max-w-md mx-auto flex items-center justify-between gap-2">
-      <!-- Intuitive RTL Month Switcher -->
-      <div class="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
-        <button onclick="changeMonth(-1)" title="חודש קודם" class="w-7 h-7 rounded-lg bg-white dark:bg-slate-700 shadow-sm flex items-center justify-center text-slate-700 dark:text-slate-200 font-bold text-sm active:scale-95 transition">›</button>
-        <span id="currentMonthLabel" class="font-bold text-xs sm:text-sm min-w-[96px] text-center px-1">נובמבר 2026</span>
-        <button onclick="changeMonth(1)" title="חודש הבא" class="w-7 h-7 rounded-lg bg-white dark:bg-slate-700 shadow-sm flex items-center justify-center text-slate-700 dark:text-slate-200 font-bold text-sm active:scale-95 transition">‹</button>
+      <!-- Month Switcher -->
+      <div class="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
+        <button onclick="changeMonth(-1)" title="חודש קודם" class="w-8 h-8 rounded-lg bg-white dark:bg-slate-700 shadow-sm flex items-center justify-center text-slate-700 dark:text-slate-200 font-bold text-base active:scale-95 transition">›</button>
+        <span id="currentMonthLabel" class="font-bold text-sm min-w-[100px] text-center px-1">נובמבר 2026</span>
+        <button onclick="changeMonth(1)" title="חודש הבא" class="w-8 h-8 rounded-lg bg-white dark:bg-slate-700 shadow-sm flex items-center justify-center text-slate-700 dark:text-slate-200 font-bold text-base active:scale-95 transition">‹</button>
       </div>
 
-      <!-- Actions: Dark Mode + Import -->
+      <!-- Actions -->
       <div class="flex items-center gap-2 shrink-0">
-        <button onclick="toggleDarkMode()" id="darkModeBtn" title="החלף מצב תצוגה" class="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 flex items-center justify-center text-base transition">
+        <button onclick="toggleDarkMode()" id="darkModeBtn" title="מצב תאורה" class="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 flex items-center justify-center text-base transition">
           🌙
         </button>
-        <label class="cursor-pointer bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-3 py-2 rounded-xl shadow-sm flex items-center gap-1.5 whitespace-nowrap transition active:scale-95">
+        <label class="cursor-pointer bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-3.5 py-2.5 rounded-xl shadow-sm flex items-center gap-1.5 whitespace-nowrap transition active:scale-95">
           <span>📥 ייבוא קובץ</span>
           <input type="file" id="fileUploadInput" accept=".xlsx,.xls,.csv,.txt,.html" class="hidden" onchange="handleFileUpload(event)" />
         </label>
@@ -48,33 +48,41 @@
   </header>
 
   <!-- Main Container -->
-  <main class="max-w-md mx-auto p-4">
+  <main class="max-w-md mx-auto p-4 space-y-4">
 
     <!-- VIEW 1: DASHBOARD -->
     <section id="view-dashboard" class="space-y-4">
-      <!-- Hero Card: Free Variable Budget -->
-      <div class="bg-white dark:bg-slate-900 rounded-2xl p-5 shadow-sm border border-slate-100 dark:border-slate-800">
+      <!-- Premium Gradient Hero Card -->
+      <div class="bg-gradient-to-br from-slate-900 via-slate-800 to-blue-950 text-white rounded-3xl p-5 shadow-lg relative overflow-hidden">
         <div class="flex justify-between items-center mb-1">
-          <span class="text-xs font-semibold text-slate-500 dark:text-slate-400">יתרה פנויה להוצאות משתנות החודש</span>
-          <span id="pacingBadge" class="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-400">קצב תקין</span>
-        </div>
-        <div id="heroRemaining" class="text-4xl font-extrabold text-slate-900 dark:text-white my-1.5 tracking-tight">₪0</div>
-        <div class="text-xs text-slate-500 dark:text-slate-400 mb-3">
-          משתנות בפועל: <span id="heroSpent" class="font-bold text-slate-700 dark:text-slate-200">₪0</span> מתוך תקציב <span id="heroBudget" class="font-bold text-slate-700 dark:text-slate-200">₪0</span>
+          <span class="text-xs font-medium text-slate-300">יתרה פנויה להוצאות משתנות</span>
+          <span id="pacingBadge" class="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-400/30">קצב תקין</span>
         </div>
 
-        <div class="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-2.5 overflow-hidden relative">
-          <div id="budgetProgressBar" class="bg-emerald-500 h-2.5 rounded-full transition-all duration-300" style="width: 0%"></div>
+        <div class="flex items-baseline justify-between my-2">
+          <div id="heroRemaining" class="text-4xl font-black tracking-tight">₪0</div>
+          <button onclick="openAddModal()" class="bg-blue-500 hover:bg-blue-400 text-white text-xs font-bold px-3.5 py-2 rounded-xl shadow-md flex items-center gap-1 transition active:scale-95">
+            <span class="text-base leading-none">+</span>
+            <span>הוסף תנועה</span>
+          </button>
         </div>
-        <div class="flex justify-between text-[11px] text-slate-400 mt-1.5">
+
+        <div class="text-xs text-slate-300 mb-3">
+          נוצלו <span id="heroSpent" class="font-bold text-white">₪0</span> מתוך תקציב משתנות <span id="heroBudget" class="font-bold text-white">₪0</span>
+        </div>
+
+        <div class="w-full bg-white/15 rounded-full h-2.5 overflow-hidden">
+          <div id="budgetProgressBar" class="bg-emerald-400 h-2.5 rounded-full transition-all duration-300" style="width: 0%"></div>
+        </div>
+        <div class="flex justify-between text-[11px] text-slate-400 mt-2">
           <span id="spentPercentLabel">0% נוצל</span>
           <span id="monthProgressLabel">התקדמות החודש: 50%</span>
         </div>
       </div>
 
-      <!-- Fixed vs Variable Split Cards (Clean Vertical Rows for Mobile) -->
+      <!-- Fixed vs Variable Split Cards -->
       <div class="grid grid-cols-2 gap-3">
-        <div onclick="openIncomeTransactions()" class="cursor-pointer bg-white dark:bg-slate-900 p-3.5 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm hover:border-emerald-300 dark:hover:border-emerald-800 transition">
+        <div onclick="openIncomeTransactions()" class="cursor-pointer bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200/70 dark:border-slate-800 shadow-sm hover:border-emerald-400 transition">
           <div class="flex justify-between items-center text-[11px] text-slate-400 mb-1">
             <span>הכנסות החודש</span>
             <span class="text-emerald-600 dark:text-emerald-400 font-bold">פירוט ›</span>
@@ -92,7 +100,7 @@
           </div>
         </div>
 
-        <div class="bg-white dark:bg-slate-900 p-3.5 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm">
+        <div class="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200/70 dark:border-slate-800 shadow-sm">
           <div class="flex justify-between items-center text-[11px] text-slate-400 mb-1">
             <span>הוצאות החודש</span>
             <span class="text-slate-400 font-bold">סה"כ</span>
@@ -111,26 +119,26 @@
         </div>
       </div>
 
-      <!-- Net Balance Bar -->
-      <div class="bg-white dark:bg-slate-900 px-4 py-3 rounded-xl border border-slate-100 dark:border-slate-800 shadow-sm flex justify-between items-center text-xs">
-        <span class="text-slate-500 dark:text-slate-400 font-semibold">מאזן חודשי נטו (הכנסות פחות הוצאות):</span>
+      <!-- Net Balance Pill -->
+      <div class="bg-white dark:bg-slate-900 px-4 py-3 rounded-2xl border border-slate-200/70 dark:border-slate-800 shadow-sm flex justify-between items-center text-xs">
+        <span class="text-slate-500 dark:text-slate-400 font-semibold">מאזן חודשי נטו (הכנסות פחות הוצאות)</span>
         <span id="dashBalance" class="font-extrabold text-sm text-blue-600 dark:text-blue-400">₪0</span>
       </div>
 
       <!-- Variable Categories Breakdown -->
-      <div class="bg-white dark:bg-slate-900 rounded-2xl p-4 shadow-sm border border-slate-100 dark:border-slate-800">
+      <div class="bg-white dark:bg-slate-900 rounded-2xl p-4 shadow-sm border border-slate-200/70 dark:border-slate-800">
         <div class="flex justify-between items-center mb-3">
           <div>
             <h2 class="font-bold text-sm text-slate-800 dark:text-slate-100">🔄 הוצאות משתנות (שוטפות)</h2>
             <p class="text-[10px] text-slate-400">לחץ על שורה לצפייה בעסקאות</p>
           </div>
-          <button onclick="openNewCategoryModal()" class="text-[11px] bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400 font-bold px-2.5 py-1.5 rounded-lg hover:bg-blue-100 transition">+ קטגוריה</button>
+          <button onclick="openNewCategoryModal()" class="text-[11px] bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400 font-bold px-2.5 py-1.5 rounded-xl hover:bg-blue-100 transition">+ קטגוריה</button>
         </div>
         <div id="variableCategoryCardsList" class="space-y-2"></div>
       </div>
 
       <!-- Fixed Categories Breakdown -->
-      <div class="bg-white dark:bg-slate-900 rounded-2xl p-4 shadow-sm border border-slate-100 dark:border-slate-800">
+      <div class="bg-white dark:bg-slate-900 rounded-2xl p-4 shadow-sm border border-slate-200/70 dark:border-slate-800">
         <div class="mb-3">
           <h2 class="font-bold text-sm text-slate-800 dark:text-slate-100">🔒 הוצאות קבועות ומתחייבות</h2>
           <p class="text-[10px] text-slate-400">דיור, חשבונות, הלוואות, חיסכון ותרומות</p>
@@ -141,30 +149,30 @@
 
     <!-- VIEW 2: TRANSACTIONS -->
     <section id="view-transactions" class="hidden space-y-3">
-      <div class="bg-white dark:bg-slate-900 p-3 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 space-y-2">
+      <div class="bg-white dark:bg-slate-900 p-3.5 rounded-2xl shadow-sm border border-slate-200/70 dark:border-slate-800 space-y-2.5">
         <div class="flex gap-2">
-          <input type="text" id="searchInput" oninput="renderTransactions()" placeholder="חיפוש בית עסק או סכום..." class="w-full text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500" />
-          <select id="filterCategory" onchange="renderTransactions()" class="text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-2 py-2 focus:outline-none max-w-[155px]">
+          <input type="text" id="searchInput" oninput="renderTransactions()" placeholder="חיפוש בית עסק או סכום..." class="w-full text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 focus:outline-none focus:border-blue-500" />
+          <select id="filterCategory" onchange="renderTransactions()" class="text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-2.5 py-2 focus:outline-none max-w-[155px]">
             <option value="ALL">כל התנועות</option>
           </select>
         </div>
         <div class="flex gap-1.5 text-[11px] font-bold">
-          <button onclick="setTxNatureFilter('ALL')" id="natFilter-ALL" class="px-2.5 py-1 rounded-lg bg-slate-800 dark:bg-blue-600 text-white">הכל</button>
-          <button onclick="setTxNatureFilter('fixed')" id="natFilter-fixed" class="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">🔒 קבועות בלבד</button>
-          <button onclick="setTxNatureFilter('variable')" id="natFilter-variable" class="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">🔄 משתנות בלבד</button>
+          <button onclick="setTxNatureFilter('ALL')" id="natFilter-ALL" class="px-3 py-1.5 rounded-xl bg-slate-900 dark:bg-blue-600 text-white">הכל</button>
+          <button onclick="setTxNatureFilter('fixed')" id="natFilter-fixed" class="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">🔒 קבועות</button>
+          <button onclick="setTxNatureFilter('variable')" id="natFilter-variable" class="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">🔄 משתנות</button>
         </div>
       </div>
 
-      <div id="transactionsSummaryBar" class="hidden bg-blue-50 dark:bg-blue-950/60 text-blue-800 dark:text-blue-300 px-3.5 py-2 rounded-xl text-xs font-bold flex justify-between items-center">
+      <div id="transactionsSummaryBar" class="hidden bg-blue-50 dark:bg-blue-950/60 text-blue-800 dark:text-blue-300 px-4 py-2.5 rounded-xl text-xs font-bold flex justify-between items-center">
         <span id="filteredSummaryText"></span>
         <button onclick="clearCategoryFilter()" class="text-blue-600 dark:text-blue-400 underline text-[11px]">איפוס סינון</button>
       </div>
       <div id="transactionsList" class="space-y-2"></div>
     </section>
 
-    <!-- VIEW 3: BUDGET SETUP & SYNC -->
+    <!-- VIEW 3: BUDGET SETUP, CATEGORY EDITOR & SYNC -->
     <section id="view-budget" class="hidden space-y-4">
-      <div class="bg-white dark:bg-slate-900 rounded-2xl p-4 shadow-sm border border-slate-100 dark:border-slate-800 space-y-3">
+      <div class="bg-white dark:bg-slate-900 rounded-2xl p-4 shadow-sm border border-slate-200/70 dark:border-slate-800 space-y-3">
         <h2 class="font-bold text-base">1. הכנסת בסיס קבועה (ברירת מחדל)</h2>
         <p class="text-[11px] text-slate-400">משמשת כבסיס אם טרם יובאו תנועות הכנסה לחודש הנוכחי.</p>
         <div>
@@ -173,15 +181,16 @@
         </div>
       </div>
 
-      <div class="bg-white dark:bg-slate-900 rounded-2xl p-4 shadow-sm border border-slate-100 dark:border-slate-800 space-y-3">
+      <!-- Manage & Edit Categories -->
+      <div class="bg-white dark:bg-slate-900 rounded-2xl p-4 shadow-sm border border-slate-200/70 dark:border-slate-800 space-y-3">
         <div class="flex justify-between items-center">
           <div>
-            <h2 class="font-bold text-base">2. תקציב יעד וסיווג קבוע/משתנה</h2>
-            <p class="text-[10px] text-slate-400">לחץ על תגית 🔒/🔄 ליד כל קטגוריה לשינוי סיווג</p>
+            <h2 class="font-bold text-base">2. ניהול ועריכת קטגוריות ותקציב</h2>
+            <p class="text-[10px] text-slate-400">לחץ על ✏️ לעריכת שם/אייקון/מחיקה, או על 🔒/🔄 להחלפת סיווג</p>
           </div>
-          <button onclick="openNewCategoryModal()" class="text-xs bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400 font-bold px-2.5 py-1 rounded-lg">+ קטגוריה</button>
+          <button onclick="openNewCategoryModal()" class="text-xs bg-blue-600 text-white font-bold px-3 py-1.5 rounded-xl shadow-sm">+ חדשה</button>
         </div>
-        <div class="bg-blue-50 dark:bg-blue-950/50 p-2.5 rounded-xl flex justify-between items-center text-xs">
+        <div class="bg-blue-50 dark:bg-blue-950/50 p-3 rounded-xl flex justify-between items-center text-xs">
           <span class="font-semibold text-blue-800 dark:text-blue-300">יתרה לחלוקה מתוך ההכנסות:</span>
           <span id="unallocatedBadge" class="font-extrabold text-blue-700 dark:text-blue-400">₪0</span>
         </div>
@@ -189,10 +198,10 @@
       </div>
 
       <!-- Device Sync & Backup Section -->
-      <div class="bg-white dark:bg-slate-900 rounded-2xl p-4 shadow-sm border border-slate-100 dark:border-slate-800 space-y-3">
+      <div class="bg-white dark:bg-slate-900 rounded-2xl p-4 shadow-sm border border-slate-200/70 dark:border-slate-800 space-y-3">
         <div>
           <h2 class="font-bold text-base">3. סנכרון נתונים בין מחשב לטלפון וגיבוי</h2>
-          <p class="text-[11px] text-slate-400 mt-0.5">הנתונים נשמרים מקומית במכשיר. כדי להעביר נתונים מהמחשב לטלפון, שמור קובץ גיבוי ושלח אותו לעצמך.</p>
+          <p class="text-[11px] text-slate-400 mt-0.5">כדי להעביר נתונים בין המחשב לטלפון, שמור קובץ גיבוי (JSON) וטען אותו במכשיר השני.</p>
         </div>
         <div class="grid grid-cols-2 gap-2">
           <button onclick="exportBackupJSON()" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold py-2.5 px-3 rounded-xl text-center">
@@ -212,13 +221,8 @@
 
   </main>
 
-  <!-- Floating Add Button (Positioned cleanly above nav without overlapping) -->
-  <button onclick="openAddModal()" title="הוספת תנועה" class="fixed bottom-20 left-4 bg-blue-600 hover:bg-blue-700 text-white w-12 h-12 rounded-full shadow-lg flex items-center justify-center text-2xl font-light z-30 transition transform active:scale-95">
-    +
-  </button>
-
   <!-- Bottom Navigation -->
-  <nav class="fixed bottom-0 inset-x-0 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 z-30">
+  <nav class="fixed bottom-0 inset-x-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur border-t border-slate-200/80 dark:border-slate-800 z-30">
     <div class="max-w-md mx-auto grid grid-cols-3 text-center">
       <button id="nav-dashboard" onclick="switchTab('dashboard')" class="py-2.5 text-xs tab-active flex flex-col items-center gap-0.5">
         <span class="text-lg">📊</span>
@@ -343,6 +347,57 @@
       <div class="flex gap-2 pt-2">
         <button onclick="saveEditedTransaction()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-xl text-sm">שמור שינויים</button>
         <button onclick="closeEditTxModal()" class="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-semibold">ביטול</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Existing Category Modal (NEW FEATURE) -->
+  <div id="editCategoryModal" class="fixed inset-0 bg-black/70 z-[60] hidden flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-slate-900 w-full max-w-sm rounded-2xl p-5 space-y-4">
+      <div class="flex justify-between items-center border-b dark:border-slate-800 pb-2">
+        <h3 class="font-bold text-base">✏️ עריכת קטגוריה</h3>
+        <button onclick="document.getElementById('editCategoryModal').classList.add('hidden')" class="text-slate-400 font-bold">✕</button>
+      </div>
+      <input type="hidden" id="editCatId" />
+      <div class="space-y-3">
+        <div>
+          <label class="text-xs font-bold text-slate-600 dark:text-slate-300 block mb-1">שם הקטגוריה</label>
+          <input type="text" id="editCatName" class="w-full border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-sm bg-white dark:bg-slate-800" />
+        </div>
+        <div>
+          <label class="text-xs font-bold text-slate-600 dark:text-slate-300 block mb-1">סיווג הקטגוריה</label>
+          <div class="grid grid-cols-2 gap-2 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl text-xs font-bold">
+            <button type="button" id="btnEditCatVar" onclick="setEditCatNature('variable')" class="py-1.5 rounded-lg bg-white dark:bg-slate-700 text-blue-700 dark:text-blue-400 shadow-sm">🔄 הוצאה משתנה</button>
+            <button type="button" id="btnEditCatFixed" onclick="setEditCatNature('fixed')" class="py-1.5 rounded-lg text-slate-500">🔒 הוצאה קבועה</button>
+          </div>
+        </div>
+        <div>
+          <label class="text-xs font-bold text-slate-600 dark:text-slate-300 block mb-1">אייקון</label>
+          <div class="flex flex-wrap gap-1.5" id="editIconPicker">
+            <button type="button" onclick="selectEditCatIcon('🏠', this)" class="edit-icon-opt p-2 border dark:border-slate-700 rounded-lg text-base">🏠</button>
+            <button type="button" onclick="selectEditCatIcon('💡', this)" class="edit-icon-opt p-2 border dark:border-slate-700 rounded-lg text-base">💡</button>
+            <button type="button" onclick="selectEditCatIcon('📈', this)" class="edit-icon-opt p-2 border dark:border-slate-700 rounded-lg text-base">📈</button>
+            <button type="button" onclick="selectEditCatIcon('🏦', this)" class="edit-icon-opt p-2 border dark:border-slate-700 rounded-lg text-base">🏦</button>
+            <button type="button" onclick="selectEditCatIcon('🤝', this)" class="edit-icon-opt p-2 border dark:border-slate-700 rounded-lg text-base">🤝</button>
+            <button type="button" onclick="selectEditCatIcon('💳', this)" class="edit-icon-opt p-2 border dark:border-slate-700 rounded-lg text-base">💳</button>
+            <button type="button" onclick="selectEditCatIcon('💵', this)" class="edit-icon-opt p-2 border dark:border-slate-700 rounded-lg text-base">💵</button>
+            <button type="button" onclick="selectEditCatIcon('🛒', this)" class="edit-icon-opt p-2 border dark:border-slate-700 rounded-lg text-base">🛒</button>
+            <button type="button" onclick="selectEditCatIcon('☕', this)" class="edit-icon-opt p-2 border dark:border-slate-700 rounded-lg text-base">☕</button>
+            <button type="button" onclick="selectEditCatIcon('⛽', this)" class="edit-icon-opt p-2 border dark:border-slate-700 rounded-lg text-base">⛽</button>
+            <button type="button" onclick="selectEditCatIcon('🧸', this)" class="edit-icon-opt p-2 border dark:border-slate-700 rounded-lg text-base">🧸</button>
+            <button type="button" onclick="selectEditCatIcon('💊', this)" class="edit-icon-opt p-2 border dark:border-slate-700 rounded-lg text-base">💊</button>
+            <button type="button" onclick="selectEditCatIcon('👕', this)" class="edit-icon-opt p-2 border dark:border-slate-700 rounded-lg text-base">👕</button>
+            <button type="button" onclick="selectEditCatIcon('🎁', this)" class="edit-icon-opt p-2 border dark:border-slate-700 rounded-lg text-base">🎁</button>
+            <button type="button" onclick="selectEditCatIcon('📱', this)" class="edit-icon-opt p-2 border dark:border-slate-700 rounded-lg text-base">📱</button>
+            <button type="button" onclick="selectEditCatIcon('🛡️', this)" class="edit-icon-opt p-2 border dark:border-slate-700 rounded-lg text-base">🛡️</button>
+            <button type="button" onclick="selectEditCatIcon('🎓', this)" class="edit-icon-opt p-2 border dark:border-slate-700 rounded-lg text-base">🎓</button>
+            <button type="button" onclick="selectEditCatIcon('📦', this)" class="edit-icon-opt p-2 border dark:border-slate-700 rounded-lg text-base">📦</button>
+          </div>
+        </div>
+      </div>
+      <div class="flex gap-2 pt-1">
+        <button onclick="saveEditedCategory()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-xl text-sm">שמור שינויים</button>
+        <button id="btnDeleteCategory" onclick="deleteCategory()" class="px-3.5 py-2.5 rounded-xl bg-rose-50 dark:bg-rose-950 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-900 text-xs font-bold">🗑️ מחק</button>
       </div>
     </div>
   </div>
@@ -542,6 +597,8 @@
     let quickTxType = 'expense';
     let quickIncomeNature = 'fixed';
     let newCatNature = 'variable';
+    let editCatNature = 'variable';
+    let selectedEditCatIcon = '🏷️';
     let selectedNewIcon = '🏷️';
     let txNatureFilter = 'ALL';
     let pendingImportRows = [];
@@ -590,7 +647,6 @@
       }
     }
 
-    // --- BACKUP & RESTORE BETWEEN DEVICES ---
     function exportBackupJSON() {
       const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
@@ -659,9 +715,9 @@
       ['ALL', 'fixed', 'variable'].forEach(k => {
         const btn = document.getElementById('natFilter-' + k);
         if (k === nat) {
-          btn.className = 'px-2.5 py-1 rounded-lg bg-slate-800 dark:bg-blue-600 text-white';
+          btn.className = 'px-3 py-1.5 rounded-xl bg-slate-900 dark:bg-blue-600 text-white';
         } else {
-          btn.className = 'px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300';
+          btn.className = 'px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300';
         }
       });
       renderTransactions();
@@ -735,7 +791,7 @@
       const remainingVar = effectiveVarBudget - varExp;
 
       document.getElementById('heroRemaining').textContent = formatCurrency(remainingVar);
-      document.getElementById('heroRemaining').className = `text-4xl font-extrabold my-1.5 tracking-tight ${remainingVar < 0 ? 'text-rose-600 dark:text-rose-400' : 'text-slate-900 dark:text-white'}`;
+      document.getElementById('heroRemaining').className = `text-4xl font-black tracking-tight ${remainingVar < 0 ? 'text-rose-400' : 'text-white'}`;
       document.getElementById('heroSpent').textContent = formatCurrency(varExp);
       document.getElementById('heroBudget').textContent = formatCurrency(effectiveVarBudget);
 
@@ -761,16 +817,16 @@
       bar.style.width = `${spentPct}%`;
 
       if (effectiveVarBudget > 0 && remainingVar < 0) {
-        bar.className = 'bg-rose-500 h-2.5 rounded-full transition-all';
-        badge.className = 'text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-rose-100 dark:bg-rose-950 text-rose-700 dark:text-rose-400';
+        bar.className = 'bg-rose-400 h-2.5 rounded-full transition-all';
+        badge.className = 'text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-rose-500/20 text-rose-300 border border-rose-400/30';
         badge.textContent = 'חריגה במשתנות';
       } else if (effectiveVarBudget > 0 && spentPct > monthPct + 10) {
-        bar.className = 'bg-amber-500 h-2.5 rounded-full transition-all';
-        badge.className = 'text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-400';
+        bar.className = 'bg-amber-400 h-2.5 rounded-full transition-all';
+        badge.className = 'text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-400/30';
         badge.textContent = 'קצב הוצאה מהיר';
       } else {
-        bar.className = 'bg-emerald-500 h-2.5 rounded-full transition-all';
-        badge.className = 'text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-400';
+        bar.className = 'bg-emerald-400 h-2.5 rounded-full transition-all';
+        badge.className = 'text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-400/30';
         badge.textContent = 'קצב תקין';
       }
 
@@ -855,7 +911,7 @@
 
       const container = document.getElementById('transactionsList');
       if (txs.length === 0) {
-        container.innerHTML = `<div class="text-center text-slate-400 text-sm py-10 bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800">אין תנועות להצגה בחודש זה</div>`;
+        container.innerHTML = `<div class="text-center text-slate-400 text-sm py-10 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/70 dark:border-slate-800">אין תנועות להצגה בחודש זה</div>`;
         return;
       }
 
@@ -871,9 +927,9 @@
           : (state.categories.find(c => c.id === tx.category) || state.categories[state.categories.length - 1]);
 
         return `
-          <div class="bg-white dark:bg-slate-900 p-3.5 rounded-xl shadow-sm border ${isInc ? 'border-emerald-200/80 dark:border-emerald-900/60' : 'border-slate-100 dark:border-slate-800'} flex justify-between items-center">
+          <div class="bg-white dark:bg-slate-900 p-3.5 rounded-2xl shadow-sm border ${isInc ? 'border-emerald-200/80 dark:border-emerald-900/60' : 'border-slate-200/70 dark:border-slate-800'} flex justify-between items-center">
             <div class="flex items-center gap-3 min-w-0">
-              <div class="w-10 h-10 rounded-full ${isInc ? 'bg-emerald-100 dark:bg-emerald-950' : 'bg-slate-100 dark:bg-slate-800'} flex items-center justify-center text-lg shrink-0">${cat.icon}</div>
+              <div class="w-10 h-10 rounded-xl ${isInc ? 'bg-emerald-100 dark:bg-emerald-950' : 'bg-slate-100 dark:bg-slate-800'} flex items-center justify-center text-lg shrink-0">${cat.icon}</div>
               <div class="truncate">
                 <div class="font-bold text-sm truncate">${tx.note || cat.name}</div>
                 <div class="text-[11px] text-slate-400 flex items-center gap-1.5 mt-0.5">
@@ -972,12 +1028,77 @@
       renderAll();
     }
 
+    // --- CATEGORY MANAGEMENT & EDITING (NEW) ---
     function toggleCategoryNature(catId) {
       const cat = state.categories.find(c => c.id === catId);
       if (!cat) return;
       cat.nature = cat.nature === 'fixed' ? 'variable' : 'fixed';
       saveState();
       renderAll();
+    }
+
+    function openEditCategoryModal(catId) {
+      const cat = state.categories.find(c => c.id === catId);
+      if (!cat) return;
+      document.getElementById('editCatId').value = cat.id;
+      document.getElementById('editCatName').value = cat.name;
+      selectedEditCatIcon = cat.icon;
+      setEditCatNature(cat.nature || 'variable');
+
+      document.querySelectorAll('.edit-icon-opt').forEach(btn => {
+        btn.classList.toggle('bg-blue-50', btn.textContent.trim() === cat.icon);
+        btn.classList.toggle('dark:bg-blue-950', btn.textContent.trim() === cat.icon);
+        btn.classList.toggle('border-blue-500', btn.textContent.trim() === cat.icon);
+      });
+
+      document.getElementById('btnDeleteCategory').classList.toggle('hidden', cat.id === 'other');
+      document.getElementById('editCategoryModal').classList.remove('hidden');
+    }
+
+    function setEditCatNature(nat) {
+      editCatNature = nat;
+      document.getElementById('btnEditCatVar').className = nat === 'variable' ? 'py-1.5 rounded-lg bg-white dark:bg-slate-700 text-blue-700 dark:text-blue-400 shadow-sm' : 'py-1.5 rounded-lg text-slate-500';
+      document.getElementById('btnEditCatFixed').className = nat === 'fixed' ? 'py-1.5 rounded-lg bg-white dark:bg-slate-700 text-slate-800 dark:text-white shadow-sm' : 'py-1.5 rounded-lg text-slate-500';
+    }
+
+    function selectEditCatIcon(icon, btn) {
+      selectedEditCatIcon = icon;
+      document.querySelectorAll('.edit-icon-opt').forEach(b => b.classList.remove('bg-blue-50', 'dark:bg-blue-950', 'border-blue-500'));
+      btn.classList.add('bg-blue-50', 'dark:bg-blue-950', 'border-blue-500');
+    }
+
+    function saveEditedCategory() {
+      const id = document.getElementById('editCatId').value;
+      const cat = state.categories.find(c => c.id === id);
+      if (!cat) return;
+      const newName = document.getElementById('editCatName').value.trim();
+      if (!newName) return alert('נא להזין שם לקטגוריה');
+
+      cat.name = newName;
+      cat.icon = selectedEditCatIcon;
+      cat.nature = editCatNature;
+      saveState();
+      document.getElementById('editCategoryModal').classList.add('hidden');
+      renderAll();
+    }
+
+    function deleteCategory() {
+      const id = document.getElementById('editCatId').value;
+      if (id === 'other') return;
+      const cat = state.categories.find(c => c.id === id);
+      if (!cat) return;
+
+      if (confirm(`למחוק את הקטגוריה "${cat.name}"?\n(כל התנועות המשויכות אליה יועברו אוטומטית ל"שונות" ולא יימחקו)`)) {
+        state.transactions.forEach(t => {
+          if (t.category === id) t.category = 'other';
+        });
+        delete state.catBudgets[id];
+        state.categories = state.categories.filter(c => c.id !== id);
+        if (selectedQuickCat === id) selectedQuickCat = 'other';
+        saveState();
+        document.getElementById('editCategoryModal').classList.add('hidden');
+        renderAll();
+      }
     }
 
     function renderBudgetSettings() {
@@ -987,14 +1108,15 @@
       container.innerHTML = state.categories.map(cat => {
         const isFixed = cat.nature === 'fixed';
         return `
-          <div class="flex items-center justify-between gap-2">
+          <div class="flex items-center justify-between gap-2 bg-slate-50/70 dark:bg-slate-800/50 p-2 rounded-xl">
             <div class="flex items-center gap-1.5 min-w-0">
-              <button type="button" onclick="toggleCategoryNature('${cat.id}')" title="לחץ להחלפה בין קבוע למשתנה" class="text-[10px] px-2 py-1 rounded-lg font-bold shrink-0 ${isFixed ? 'bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300' : 'bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400'}">
-                ${isFixed ? '🔒 קבועה' : '🔄 משתנה'}
+              <button type="button" onclick="openEditCategoryModal('${cat.id}')" title="ערוך קטגוריה" class="p-1 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-[11px] hover:border-blue-400 shrink-0">✏️</button>
+              <button type="button" onclick="toggleCategoryNature('${cat.id}')" title="לחץ להחלפה בין קבוע למשתנה" class="text-[10px] px-1.5 py-1 rounded-lg font-bold shrink-0 ${isFixed ? 'bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200' : 'bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-400'}">
+                ${isFixed ? '🔒' : '🔄'}
               </button>
-              <label class="text-xs font-semibold truncate">${cat.icon} ${cat.name}</label>
+              <span onclick="openEditCategoryModal('${cat.id}')" class="cursor-pointer text-xs font-semibold truncate">${cat.icon} ${cat.name}</span>
             </div>
-            <input type="number" data-cat="${cat.id}" value="${state.catBudgets[cat.id] || 0}" onchange="saveBudgetSettings()" class="cat-budget-input w-24 text-left border border-slate-200 dark:border-slate-700 rounded-lg px-2 py-1.5 text-sm font-bold bg-slate-50 dark:bg-slate-800 shrink-0" />
+            <input type="number" data-cat="${cat.id}" value="${state.catBudgets[cat.id] || 0}" onchange="saveBudgetSettings()" class="cat-budget-input w-24 text-left border border-slate-200 dark:border-slate-700 rounded-lg px-2 py-1.5 text-sm font-bold bg-white dark:bg-slate-900 shrink-0" />
           </div>
         `;
       }).join('');
@@ -1644,7 +1766,7 @@
 
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js').catch(() => {});
+        navigator.serviceWorker.register('./sw.js').then(reg => reg.update()).catch(() => {});
       });
     }
   </script>
