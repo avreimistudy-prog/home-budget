@@ -59,16 +59,16 @@
       </div>
 
       <div class="grid grid-cols-3 gap-2.5 text-center">
-        <div class="bg-white p-3 rounded-xl border border-slate-100 shadow-sm">
-          <div class="text-[11px] text-slate-400">הכנסות</div>
+        <div onclick="openIncomeTransactions()" class="cursor-pointer bg-white p-3 rounded-xl border border-slate-100 shadow-sm hover:bg-emerald-50/40 transition">
+          <div class="text-[11px] text-slate-400">הכנסות בפועל ◀</div>
           <div id="dashIncome" class="font-bold text-sm text-emerald-600 mt-0.5">₪0</div>
         </div>
         <div class="bg-white p-3 rounded-xl border border-slate-100 shadow-sm">
-          <div class="text-[11px] text-slate-400">סך הוצאות החודש</div>
+          <div class="text-[11px] text-slate-400">הוצאות החודש</div>
           <div id="dashTotalSpent" class="font-bold text-sm text-slate-700 mt-0.5">₪0</div>
         </div>
         <div class="bg-white p-3 rounded-xl border border-slate-100 shadow-sm">
-          <div class="text-[11px] text-slate-400">מאזן חודשי</div>
+          <div class="text-[11px] text-slate-400">מאזן (הכנסות-הוצאות)</div>
           <div id="dashBalance" class="font-bold text-sm text-blue-600 mt-0.5">₪0</div>
         </div>
       </div>
@@ -89,8 +89,8 @@
     <section id="view-transactions" class="hidden space-y-3">
       <div class="bg-white p-3 rounded-xl shadow-sm border border-slate-100 flex gap-2">
         <input type="text" id="searchInput" oninput="renderTransactions()" placeholder="חיפוש בית עסק או סכום..." class="w-full text-sm bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500" />
-        <select id="filterCategory" onchange="renderTransactions()" class="text-sm bg-slate-50 border border-slate-200 rounded-lg px-2 py-2 focus:outline-none max-w-[150px]">
-          <option value="ALL">כל הקטגוריות</option>
+        <select id="filterCategory" onchange="renderTransactions()" class="text-sm bg-slate-50 border border-slate-200 rounded-lg px-2 py-2 focus:outline-none max-w-[155px]">
+          <option value="ALL">כל התנועות</option>
         </select>
       </div>
       <div id="transactionsSummaryBar" class="hidden bg-blue-50 text-blue-800 px-3.5 py-2 rounded-xl text-xs font-bold flex justify-between items-center">
@@ -103,9 +103,10 @@
     <!-- VIEW 3: BUDGET SETUP -->
     <section id="view-budget" class="hidden space-y-4">
       <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 space-y-3">
-        <h2 class="font-bold text-base text-slate-800">1. הכנסות נטו</h2>
+        <h2 class="font-bold text-base text-slate-800">1. הכנסת בסיס חודשית (ברירת מחדל)</h2>
+        <p class="text-[11px] text-slate-400">אם יובאו הכנסות מהקובץ עבור החודש, המערכת תשתמש בהכנסות בפועל מהקובץ.</p>
         <div>
-          <label class="block text-xs font-semibold text-slate-500 mb-1">סך הכנסות נטו לחודש (₪)</label>
+          <label class="block text-xs font-semibold text-slate-500 mb-1">הכנסה חודשית צפויה (₪)</label>
           <input type="number" id="inputIncome" onchange="saveBudgetSettings()" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-base font-bold bg-slate-50" />
         </div>
       </div>
@@ -116,7 +117,7 @@
           <button onclick="openNewCategoryModal()" class="text-xs bg-blue-50 text-blue-600 font-bold px-2.5 py-1 rounded-lg">+ קטגוריה</button>
         </div>
         <div class="bg-blue-50 p-2.5 rounded-xl flex justify-between items-center text-xs">
-          <span class="font-semibold text-blue-800">נותר לחלוקה מתוך ההכנסות:</span>
+          <span class="font-semibold text-blue-800">נותר לחלוקה מתוך ההכנסה החודשית:</span>
           <span id="unallocatedBadge" class="font-extrabold text-blue-700">₪0</span>
         </div>
         <div id="categoryBudgetsInputs" class="space-y-2.5"></div>
@@ -157,30 +158,37 @@
   <div id="addModal" class="fixed inset-0 bg-black/50 z-50 hidden flex items-end sm:items-center justify-center">
     <div class="bg-white w-full max-w-md rounded-t-3xl sm:rounded-2xl p-5 space-y-4 max-h-[90vh] overflow-y-auto">
       <div class="flex justify-between items-center">
-        <h3 class="font-bold text-lg">הוספת הוצאה מהירה</h3>
+        <h3 class="font-bold text-lg">הוספת תנועה מהירה</h3>
         <button onclick="closeAddModal()" class="text-slate-400 hover:text-slate-600 text-xl font-bold">✕</button>
       </div>
+
+      <!-- Expense vs Income Toggle -->
+      <div class="grid grid-cols-2 gap-2 bg-slate-100 p-1 rounded-xl text-xs font-bold">
+        <button type="button" id="btnTypeExpense" onclick="setQuickTxType('expense')" class="py-2 rounded-lg bg-white text-slate-800 shadow-sm transition">➖ הוצאה</button>
+        <button type="button" id="btnTypeIncome" onclick="setQuickTxType('income')" class="py-2 rounded-lg text-slate-500 transition">➕ הכנסה (משכורת / קצבה)</button>
+      </div>
+
       <div>
         <label class="text-xs text-slate-500">סכום (₪)</label>
         <input type="number" id="quickAmount" inputmode="decimal" placeholder="0" class="w-full text-3xl font-extrabold border-b-2 border-blue-500 py-2 focus:outline-none text-center" />
       </div>
-      <div>
+      <div id="quickCatSection">
         <div class="flex justify-between items-center mb-2">
           <label class="text-xs text-slate-500">בחר קטגוריה:</label>
           <button type="button" onclick="openNewCategoryModal()" class="text-[11px] text-blue-600 font-bold">+ קטגוריה חדשה</button>
         </div>
         <div id="quickCategoryGrid" class="grid grid-cols-4 gap-2"></div>
       </div>
-      <details class="text-xs text-slate-600 bg-slate-50 p-3 rounded-xl">
-        <summary class="cursor-pointer font-semibold text-blue-600">+ הערה, תאריך או תשלומים</summary>
+      <details class="text-xs text-slate-600 bg-slate-50 p-3 rounded-xl" open>
+        <summary class="cursor-pointer font-semibold text-blue-600">+ תיאור, תאריך או תשלומים</summary>
         <div class="mt-3 space-y-2.5">
-          <input type="text" id="quickNote" placeholder="שם בית עסק / הערה (אופציונלי)" class="w-full border border-slate-200 rounded-lg px-3 py-2 bg-white" />
+          <input type="text" id="quickNote" placeholder="שם בית עסק / מקור הכנסה" class="w-full border border-slate-200 rounded-lg px-3 py-2 bg-white" />
           <div class="grid grid-cols-2 gap-2">
             <div>
               <label class="block text-[11px] text-slate-400">תאריך</label>
               <input type="date" id="quickDate" class="w-full border border-slate-200 rounded-lg px-2 py-1.5 bg-white" />
             </div>
-            <div>
+            <div id="quickInstallmentsWrap">
               <label class="block text-[11px] text-slate-400">מספר תשלומים</label>
               <select id="quickInstallments" class="w-full border border-slate-200 rounded-lg px-2 py-1.5 bg-white">
                 <option value="1">תשלום 1 (רגיל)</option>
@@ -194,7 +202,7 @@
           </div>
         </div>
       </details>
-      <button onclick="saveQuickExpense()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 rounded-xl shadow">שמור הוצאה</button>
+      <button onclick="saveQuickExpense()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 rounded-xl shadow">שמור תנועה</button>
     </div>
   </div>
 
@@ -202,16 +210,23 @@
   <div id="editTxModal" class="fixed inset-0 bg-black/60 z-50 hidden flex items-center justify-center p-4">
     <div class="bg-white w-full max-w-sm rounded-2xl p-5 space-y-4">
       <div class="flex justify-between items-center border-b pb-2">
-        <h3 class="font-bold text-base text-slate-800">✏️ עריכת עסקה</h3>
+        <h3 class="font-bold text-base text-slate-800">✏️ עריכת תנועה</h3>
         <button onclick="closeEditTxModal()" class="text-slate-400 font-bold">✕</button>
       </div>
       <input type="hidden" id="editTxId" />
       <div class="space-y-3 text-xs">
         <div>
+          <label class="font-bold text-slate-600 block mb-1">סוג תנועה</label>
+          <select id="editTxType" onchange="toggleEditCategoryVisibility()" class="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm bg-white font-bold">
+            <option value="expense">➖ הוצאה</option>
+            <option value="income">➕ הכנסה</option>
+          </select>
+        </div>
+        <div>
           <label class="font-bold text-slate-600 block mb-1">שם העסקה / תיאור</label>
           <input type="text" id="editTxNote" class="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm" />
         </div>
-        <div>
+        <div id="editTxCatWrap">
           <div class="flex justify-between items-center mb-1">
             <label class="font-bold text-slate-600">קטגוריה</label>
             <button type="button" onclick="openNewCategoryModal()" class="text-[11px] text-blue-600 font-bold">+ קטגוריה חדשה</button>
@@ -266,7 +281,7 @@
     </div>
   </div>
 
-  <!-- Smart Recurring Choice Modal (Same Amount vs Same Merchant) -->
+  <!-- Smart Recurring Choice Modal -->
   <div id="recurringChoiceModal" class="fixed inset-0 bg-black/70 z-[60] hidden flex items-center justify-center p-4">
     <div class="bg-white w-full max-w-sm rounded-2xl p-5 space-y-4">
       <div class="border-b pb-2">
@@ -276,11 +291,11 @@
       <div class="space-y-2">
         <button id="btnMatchExactAmount" onclick="resolveRecurringChoice('EXACT_AMOUNT')" class="w-full text-right p-3 rounded-xl border-2 border-blue-600 bg-blue-50 hover:bg-blue-100 transition">
           <div class="font-bold text-xs text-blue-800" id="lblExactAmount">שייך רק תנועות עם סכום זהה</div>
-          <div class="text-[11px] text-blue-600 mt-0.5" id="subExactAmount"></div>
+          <div class="text-[11px] text-blue-600 mt-0.5" id="subExactAmount">מתאים להוראות קבע או תשלומים קבועים בסכום מדויק</div>
         </button>
         <button id="btnMatchAllMerchant" onclick="resolveRecurringChoice('ALL_MERCHANT')" class="w-full text-right p-3 rounded-xl border border-slate-200 hover:bg-slate-50 transition">
           <div class="font-bold text-xs text-slate-800" id="lblAllMerchant">שייך את כל התנועות תחת שם העסק הזה</div>
-          <div class="text-[11px] text-slate-500 mt-0.5" id="subAllMerchant">ללא תלות בסכום</div>
+          <div class="text-[11px] text-slate-500 mt-0.5">ללא תלות בסכום</div>
         </button>
         <button onclick="resolveRecurringChoice('ONLY_THIS')" class="w-full text-center p-2.5 rounded-xl text-xs font-semibold text-slate-500 hover:bg-slate-100 transition">
           החל רק על התנועה הספציפית הזו
@@ -315,25 +330,38 @@
     </div>
   </div>
 
-  <!-- Import Query Modal -->
+  <!-- Import Query Modal (Live Progress + Auto-Dismiss Assigned Rows) -->
   <div id="importModal" class="fixed inset-0 bg-black/60 z-50 hidden flex items-center justify-center p-4">
     <div class="bg-white w-full max-w-md rounded-2xl p-5 max-h-[88vh] flex flex-col">
-      <div class="flex justify-between items-center pb-3 border-b">
+      <div class="flex justify-between items-center pb-2.5 border-b">
         <div>
           <h3 class="font-bold text-base text-slate-800">ניתוח קובץ שהועלה</h3>
-          <p id="importSummaryText" class="text-xs text-slate-500 mt-0.5"></p>
           <p id="importMonthsText" class="text-[11px] text-blue-600 font-semibold mt-0.5"></p>
         </div>
         <button onclick="closeImportModal()" class="text-slate-400 hover:text-slate-600 text-xl font-bold">✕</button>
       </div>
+
+      <!-- Psychological Progress Bar -->
+      <div class="bg-slate-50 p-3 rounded-xl border border-slate-200/80 mt-2.5 space-y-1.5">
+        <div class="flex justify-between items-center text-xs">
+          <span id="importProgressLabel" class="font-extrabold text-slate-800">נותרו 0 תנועות למיון</span>
+          <span id="importProgressCount" class="text-[11px] text-slate-500 font-semibold">0 / 0</span>
+        </div>
+        <div class="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
+          <div id="importProgressBar" class="bg-emerald-500 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+        </div>
+      </div>
+
       <div class="flex justify-between items-center pt-2">
-        <span class="text-[11px] text-slate-400">בחר קטגוריה לכל עסקה לא מזוהה:</span>
+        <span class="text-[11px] text-slate-400">כל תנועה שתשייך תיעלם מיד מהרשימה:</span>
         <button onclick="openNewCategoryModal()" class="text-xs bg-blue-50 text-blue-600 font-bold px-2.5 py-1 rounded-lg hover:bg-blue-100">+ קטגוריה חדשה</button>
       </div>
+
       <div id="unknownMerchantsList" class="overflow-y-auto my-2 space-y-3 flex-1 pr-1"></div>
+
       <div class="pt-3 border-t flex gap-2">
-        <button onclick="confirmImport()" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl text-sm">
-          אשר וייבא לדשבורד
+        <button onclick="confirmImport()" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl text-sm shadow-sm">
+          אשר וייבא לדשבורד (<span id="readyToImportCount">0</span> תנועות)
         </button>
       </div>
     </div>
@@ -358,6 +386,10 @@
       { id: 'other', name: 'שונות', icon: '📦' }
     ];
 
+    const INCOME_KEYWORDS = [
+      'משכורת', 'שכר עבודה', 'ביטוח לאומי', 'קצבה', 'קצבת', 'מלגה', 'זיכוי', 'החזר מס', 'דיבידנד', 'הכנסה'
+    ];
+
     const BUILTIN_KEYWORDS = {
       rent: ['שכר דירה', 'שכ"ד', 'שכירות'],
       arnona: ['ארנונה', 'עיריית', 'חברת החשמל', 'חשמל', 'חח"י', 'מים', 'מי אביבים', 'מי ברק', 'מי שבע', 'מי כרמל', 'הגיחון', 'תאגיד מים', 'גז', 'סופרגז', 'פזגז', 'ועד בית'],
@@ -375,10 +407,11 @@
       leisure: ['סינמה', 'יס פלאנט', 'הופעה', 'מתנה', 'פרחים', 'ספא', 'מלון', 'טיול']
     };
 
-    const STORAGE_KEY = 'smart_budget_v6';
+    const STORAGE_KEY = 'smart_budget_v7';
     let currentYear = new Date().getFullYear();
     let currentMonth = new Date().getMonth();
     let selectedQuickCat = 'food';
+    let quickTxType = 'expense';
     let selectedNewIcon = '🏷️';
     let pendingImportRows = [];
     let rawSheetRows = [];
@@ -446,6 +479,13 @@
       renderTransactions();
     }
 
+    function openIncomeTransactions() {
+      switchTab('transactions');
+      const filterSelect = document.getElementById('filterCategory');
+      filterSelect.value = 'INCOME_ONLY';
+      renderTransactions();
+    }
+
     function clearCategoryFilter() {
       document.getElementById('filterCategory').value = 'ALL';
       document.getElementById('searchInput').value = '';
@@ -480,19 +520,27 @@
       return state.transactions.filter(tx => tx.date && tx.date.startsWith(targetPrefix));
     }
 
+    function getMonthlyEffectiveIncome(monthTxs) {
+      const importedIncomes = monthTxs.filter(t => t.type === 'income').reduce((s, t) => s + Number(t.amount || 0), 0);
+      return importedIncomes > 0 ? importedIncomes : Number(state.income || 0);
+    }
+
     function renderDashboard() {
       const txs = getCurrentMonthTransactions();
+      const expenseTxs = txs.filter(t => t.type !== 'income');
+      const effectiveIncome = getMonthlyEffectiveIncome(txs);
+
       const totalBudget = Object.values(state.catBudgets).reduce((a, b) => a + Number(b || 0), 0);
-      const totalSpent = txs.reduce((sum, tx) => sum + Number(tx.amount || 0), 0);
+      const totalSpent = expenseTxs.reduce((sum, tx) => sum + Number(tx.amount || 0), 0);
       const remaining = totalBudget - totalSpent;
-      const balance = Number(state.income || 0) - totalSpent;
+      const balance = effectiveIncome - totalSpent;
 
       document.getElementById('heroRemaining').textContent = formatCurrency(remaining);
       document.getElementById('heroRemaining').className = `text-4xl font-extrabold my-1 ${remaining < 0 ? 'text-rose-600' : 'text-slate-900'}`;
       document.getElementById('heroSpent').textContent = formatCurrency(totalSpent);
       document.getElementById('heroBudget').textContent = formatCurrency(totalBudget);
 
-      document.getElementById('dashIncome').textContent = formatCurrency(state.income);
+      document.getElementById('dashIncome').textContent = formatCurrency(effectiveIncome);
       document.getElementById('dashTotalSpent').textContent = formatCurrency(totalSpent);
       document.getElementById('dashBalance').textContent = formatCurrency(balance);
       document.getElementById('dashBalance').className = `font-bold text-sm mt-0.5 ${balance < 0 ? 'text-rose-600' : 'text-emerald-600'}`;
@@ -528,7 +576,7 @@
       list.innerHTML = '';
       state.categories.forEach(cat => {
         const catBudget = Number(state.catBudgets[cat.id] || 0);
-        const catTxs = txs.filter(t => t.category === cat.id);
+        const catTxs = expenseTxs.filter(t => t.category === cat.id);
         const catSpent = catTxs.reduce((s, t) => s + Number(t.amount), 0);
         if (catBudget === 0 && catSpent === 0) return;
         const catRem = catBudget - catSpent;
@@ -561,7 +609,9 @@
     function renderTransactions() {
       const filterSelect = document.getElementById('filterCategory');
       const currentVal = filterSelect.value;
-      filterSelect.innerHTML = `<option value="ALL">כל הקטגוריות</option>` +
+      filterSelect.innerHTML =
+        `<option value="ALL">כל התנועות</option>` +
+        `<option value="INCOME_ONLY">💰 הכנסות בלבד</option>` +
         state.categories.map(c => `<option value="${c.id}">${c.icon} ${c.name}</option>`).join('');
       filterSelect.value = currentVal || 'ALL';
 
@@ -569,15 +619,22 @@
       const catFilter = filterSelect.value;
       let txs = getCurrentMonthTransactions().slice().sort((a, b) => b.date.localeCompare(a.date));
 
-      if (catFilter !== 'ALL') txs = txs.filter(t => t.category === catFilter);
+      if (catFilter === 'INCOME_ONLY') {
+        txs = txs.filter(t => t.type === 'income');
+      } else if (catFilter !== 'ALL') {
+        txs = txs.filter(t => t.type !== 'income' && t.category === catFilter);
+      }
+
       if (search) txs = txs.filter(t => (t.note || '').toLowerCase().includes(search) || String(t.amount).includes(search));
 
       const summaryBar = document.getElementById('transactionsSummaryBar');
       if (catFilter !== 'ALL' || search) {
         const sumFiltered = txs.reduce((s, t) => s + Number(t.amount), 0);
-        const catObj = state.categories.find(c => c.id === catFilter);
+        const label = catFilter === 'INCOME_ONLY'
+          ? '💰 הכנסות החודש'
+          : (state.categories.find(c => c.id === catFilter)?.name || 'תוצאות סינון');
         document.getElementById('filteredSummaryText').textContent =
-          `${catObj ? catObj.icon + ' ' + catObj.name : 'תוצאות סינון'}: ${txs.length} עסקאות | סה"כ ${formatCurrency(sumFiltered)}`;
+          `${label}: ${txs.length} תנועות | סה"כ ${formatCurrency(sumFiltered)}`;
         summaryBar.classList.remove('hidden');
       } else {
         summaryBar.classList.add('hidden');
@@ -590,20 +647,26 @@
       }
 
       container.innerHTML = txs.map(tx => {
-        const cat = state.categories.find(c => c.id === tx.category) || state.categories[state.categories.length - 1];
+        const isInc = tx.type === 'income';
+        const cat = isInc
+          ? { icon: '💰', name: 'הכנסה' }
+          : (state.categories.find(c => c.id === tx.category) || state.categories[state.categories.length - 1]);
+
         return `
-          <div class="bg-white p-3.5 rounded-xl shadow-sm border border-slate-100 flex justify-between items-center">
+          <div class="bg-white p-3.5 rounded-xl shadow-sm border ${isInc ? 'border-emerald-200/80 bg-emerald-50/20' : 'border-slate-100'} flex justify-between items-center">
             <div class="flex items-center gap-3 min-w-0">
-              <div class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-lg shrink-0">${cat.icon}</div>
+              <div class="w-10 h-10 rounded-full ${isInc ? 'bg-emerald-100' : 'bg-slate-100'} flex items-center justify-center text-lg shrink-0">${cat.icon}</div>
               <div class="truncate">
                 <div class="font-bold text-sm text-slate-800 truncate">${tx.note || cat.name}</div>
                 <div class="text-[11px] text-slate-400">${tx.date} • ${cat.name}</div>
               </div>
             </div>
-            <div class="flex items-center gap-2.5 shrink-0">
-              <span class="font-extrabold text-sm text-slate-800">${formatCurrency(tx.amount)}</span>
-              <button onclick="openEditTxModal('${tx.id}')" title="ערוך עסקה" class="p-1.5 rounded-lg bg-slate-50 hover:bg-blue-50 text-slate-500 hover:text-blue-600 text-xs transition">✏️</button>
-              <button onclick="deleteTransaction('${tx.id}')" title="מחק עסקה" class="p-1.5 rounded-lg hover:bg-rose-50 text-slate-300 hover:text-rose-500 text-xs transition">✕</button>
+            <div class="flex items-center gap-2 shrink-0">
+              <span class="font-extrabold text-sm ${isInc ? 'text-emerald-600' : 'text-slate-800'}">
+                ${isInc ? '+' : ''}${formatCurrency(tx.amount)}
+              </span>
+              <button onclick="openEditTxModal('${tx.id}')" title="ערוך תנועה" class="p-1.5 rounded-lg bg-slate-50 hover:bg-blue-50 text-slate-500 hover:text-blue-600 text-xs transition">✏️</button>
+              <button onclick="deleteTransaction('${tx.id}')" title="מחק תנועה" class="p-1.5 rounded-lg hover:bg-rose-50 text-slate-300 hover:text-rose-500 text-xs transition">✕</button>
             </div>
           </div>
         `;
@@ -615,15 +678,22 @@
       const tx = state.transactions.find(t => t.id === txId);
       if (!tx) return;
       document.getElementById('editTxId').value = tx.id;
+      document.getElementById('editTxType').value = tx.type === 'income' ? 'income' : 'expense';
       document.getElementById('editTxNote').value = tx.note || '';
       document.getElementById('editTxAmount').value = tx.amount;
       document.getElementById('editTxDate').value = tx.date;
 
       const catSelect = document.getElementById('editTxCategory');
       catSelect.innerHTML = state.categories.map(c => `<option value="${c.id}">${c.icon} ${c.name}</option>`).join('');
-      catSelect.value = tx.category;
+      catSelect.value = tx.category || 'other';
+      toggleEditCategoryVisibility();
 
       document.getElementById('editTxModal').classList.remove('hidden');
+    }
+
+    function toggleEditCategoryVisibility() {
+      const isInc = document.getElementById('editTxType').value === 'income';
+      document.getElementById('editTxCatWrap').classList.toggle('hidden', isInc);
     }
 
     function closeEditTxModal() {
@@ -635,31 +705,34 @@
       const tx = state.transactions.find(t => t.id === id);
       if (!tx) return;
 
+      const newType = document.getElementById('editTxType').value;
       const newNote = document.getElementById('editTxNote').value.trim();
-      const newCat = document.getElementById('editTxCategory').value;
+      const newCat = newType === 'income' ? 'INCOME' : document.getElementById('editTxCategory').value;
       const newAmount = Number(document.getElementById('editTxAmount').value);
       const newDate = document.getElementById('editTxDate').value;
 
       if (!newAmount || newAmount <= 0) return alert('נא להזין סכום תקין');
 
       const oldCleanNote = (tx.note || '').trim().toLowerCase();
+      tx.type = newType;
       tx.note = newNote;
       tx.category = newCat;
       tx.amount = newAmount;
       if (newDate) tx.date = newDate;
 
-      // עדכון חוק הלמידה אם שינו קטגוריה
       if (newNote) {
         state.learnedRules[`${newNote.toLowerCase()}_${newAmount}`] = newCat;
       }
 
-      // הצעה לעדכן עסקאות דומות קיימות אם שינו קטגוריה
       if (oldCleanNote) {
         const sameTxs = state.transactions.filter(t => t.id !== tx.id && (t.note || '').trim().toLowerCase() === oldCleanNote && t.category !== newCat);
         if (sameTxs.length > 0) {
-          const catName = state.categories.find(c => c.id === newCat)?.name || '';
-          if (confirm(`נמצאו עוד ${sameTxs.length} עסקאות עם השם "${tx.note}". האם לעדכן גם אותן לקטגוריה "${catName}"?`)) {
-            sameTxs.forEach(t => t.category = newCat);
+          const catName = newType === 'income' ? 'הכנסה' : (state.categories.find(c => c.id === newCat)?.name || '');
+          if (confirm(`נמצאו עוד ${sameTxs.length} תנועות עם השם "${tx.note}". האם לעדכן גם אותן ל"${catName}"?`)) {
+            sameTxs.forEach(t => {
+              t.type = newType;
+              t.category = newCat;
+            });
           }
         }
       }
@@ -686,8 +759,9 @@
         </div>
       `).join('');
 
+      const effectiveInc = getMonthlyEffectiveIncome(getCurrentMonthTransactions());
       const allocated = Object.values(state.catBudgets).reduce((a, b) => a + Number(b || 0), 0);
-      const unallocated = Number(state.income || 0) - allocated;
+      const unallocated = effectiveInc - allocated;
       const badge = document.getElementById('unallocatedBadge');
       badge.textContent = formatCurrency(unallocated);
       badge.className = `font-extrabold ${unallocated < 0 ? 'text-rose-600' : 'text-blue-700'}`;
@@ -738,7 +812,17 @@
     }
 
     // --- QUICK ADD ---
+    function setQuickTxType(type) {
+      quickTxType = type;
+      const isInc = type === 'income';
+      document.getElementById('btnTypeExpense').className = !isInc ? 'py-2 rounded-lg bg-white text-slate-800 shadow-sm transition' : 'py-2 rounded-lg text-slate-500 transition';
+      document.getElementById('btnTypeIncome').className = isInc ? 'py-2 rounded-lg bg-emerald-600 text-white shadow-sm transition' : 'py-2 rounded-lg text-slate-500 transition';
+      document.getElementById('quickCatSection').classList.toggle('hidden', isInc);
+      document.getElementById('quickInstallmentsWrap').classList.toggle('hidden', isInc);
+    }
+
     function openAddModal() {
+      setQuickTxType('expense');
       document.getElementById('quickAmount').value = '';
       document.getElementById('quickNote').value = '';
       document.getElementById('quickInstallments').value = '1';
@@ -772,33 +856,51 @@
       if (!amount || amount <= 0) return alert('נא להזין סכום תקין');
       const note = document.getElementById('quickNote').value.trim();
       const baseDate = document.getElementById('quickDate').value || new Date().toISOString().split('T')[0];
-      const installments = Number(document.getElementById('quickInstallments').value || 1);
-      const partAmount = Math.round((amount / installments) * 100) / 100;
 
-      const [y, m, d] = baseDate.split('-').map(Number);
-      for (let i = 0; i < installments; i++) {
-        const dt = new Date(y, m - 1 + i, d);
-        const dateStr = `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}`;
-        const label = installments > 1 ? `${note || 'הוצאה'} (תשלום ${i + 1}/${installments})` : note;
+      if (quickTxType === 'income') {
         state.transactions.push({
-          id: 'tx_' + Date.now() + '_' + i,
-          amount: partAmount,
-          category: selectedQuickCat,
-          note: label,
-          date: dateStr
+          id: 'inc_' + Date.now(),
+          type: 'income',
+          amount,
+          category: 'INCOME',
+          note: note || 'הכנסה',
+          date: baseDate
         });
+      } else {
+        const installments = Number(document.getElementById('quickInstallments').value || 1);
+        const partAmount = Math.round((amount / installments) * 100) / 100;
+        const [y, m, d] = baseDate.split('-').map(Number);
+        for (let i = 0; i < installments; i++) {
+          const dt = new Date(y, m - 1 + i, d);
+          const dateStr = `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}`;
+          const label = installments > 1 ? `${note || 'הוצאה'} (תשלום ${i + 1}/${installments})` : note;
+          state.transactions.push({
+            id: 'tx_' + Date.now() + '_' + i,
+            type: 'expense',
+            amount: partAmount,
+            category: selectedQuickCat,
+            note: label,
+            date: dateStr
+          });
+        }
       }
+
       saveState();
       closeAddModal();
       renderAll();
     }
 
-    // --- SMART MULTI-MONTH FILE IMPORT ---
-    function classifyMerchant(merchantName, amount) {
+    // --- SMART MULTI-MONTH FILE IMPORT (EXPENSES + INCOMES) ---
+    function classifyTransaction(merchantName, amount, isCreditColumn) {
       const clean = merchantName.trim().toLowerCase();
       const amountSig = `${clean}_${amount}`;
+
       if (state.learnedRules[amountSig]) return state.learnedRules[amountSig];
       if (state.learnedRules[clean]) return state.learnedRules[clean];
+
+      if (isCreditColumn || INCOME_KEYWORDS.some(w => clean.includes(w.toLowerCase()))) {
+        return 'INCOME';
+      }
 
       for (const [catId, words] of Object.entries(BUILTIN_KEYWORDS)) {
         if (words.some(w => clean.includes(w.toLowerCase()))) return catId;
@@ -870,19 +972,22 @@
 
     function autoDetectAndParse(rows) {
       let headerIdx = -1;
-      let dateCol = -1, nameCol = -1, amountCol = -1;
+      let dateCol = -1, nameCol = -1, debitCol = -1, creditCol = -1;
 
       for (let i = 0; i < Math.min(rows.length, 35); i++) {
         if (!Array.isArray(rows[i])) continue;
         const row = rows[i].map(c => String(c || '').trim());
         const dIdx = row.findIndex(c => c.includes('תאריך'));
         const nIdx = row.findIndex(c => c.includes('בית עסק') || c.includes('שם העסק') || c.includes('תיאור') || c.includes('פרטים') || c.includes('פעולה') || c.includes('עסק'));
-        const aIdx = row.findIndex(c => c.includes('סכום חיוב') || c.includes('סכום עסקה') || c.includes('חובה') || c.includes('סכום בש') || c === 'סכום');
-        if (nIdx !== -1 && aIdx !== -1) {
+        const debIdx = row.findIndex(c => c.includes('סכום חיוב') || c.includes('סכום עסקה') || c.includes('חובה') || c.includes('סכום בש') || c === 'סכום');
+        const credIdx = row.findIndex(c => c.includes('זכות'));
+
+        if (nIdx !== -1 && (debIdx !== -1 || credIdx !== -1)) {
           headerIdx = i;
           dateCol = dIdx !== -1 ? dIdx : 0;
           nameCol = nIdx;
-          amountCol = aIdx;
+          debitCol = debIdx !== -1 ? debIdx : credIdx;
+          creditCol = (credIdx !== -1 && credIdx !== debitCol) ? credIdx : -1;
           break;
         }
       }
@@ -892,7 +997,7 @@
         return;
       }
 
-      processRowsWithColumns(rows, headerIdx + 1, dateCol, nameCol, amountCol);
+      processRowsWithColumns(rows, headerIdx + 1, dateCol, nameCol, debitCol, creditCol);
     }
 
     function openManualColumnMapper(rows) {
@@ -912,25 +1017,48 @@
       const nCol = Number(document.getElementById('mapNameCol').value);
       const aCol = Number(document.getElementById('mapAmountCol').value);
       document.getElementById('columnMapModal').classList.add('hidden');
-      processRowsWithColumns(rawSheetRows, 0, dCol, nCol, aCol);
+      processRowsWithColumns(rawSheetRows, 0, dCol, nCol, aCol, -1);
     }
 
-    function processRowsWithColumns(rows, startIdx, dateCol, nameCol, amountCol) {
+    function parseAmountVal(cell) {
+      if (cell === undefined || cell === null || cell === '') return 0;
+      const str = String(cell).replace(/[^\d.\-]/g, '');
+      const val = parseFloat(str);
+      return isNaN(val) ? 0 : val;
+    }
+
+    function processRowsWithColumns(rows, startIdx, dateCol, nameCol, debitCol, creditCol) {
       pendingImportRows = [];
       for (let i = startIdx; i < rows.length; i++) {
         const r = rows[i];
         if (!r || !r[nameCol]) continue;
         const merchant = String(r[nameCol]).trim();
         if (!merchant || merchant.includes('סה"כ') || merchant.includes('סיכום') || merchant.includes('תאריך')) continue;
-        const rawAmt = String(r[amountCol] || '').replace(/[^\d.\-]/g, '');
-        const amount = Math.abs(parseFloat(rawAmt));
-        if (!amount || isNaN(amount)) continue;
+
+        let amount = 0;
+        let isCredit = false;
+
+        if (creditCol !== -1) {
+          const debVal = parseAmountVal(r[debitCol]);
+          const credVal = parseAmountVal(r[creditCol]);
+          if (credVal > 0 && debVal === 0) {
+            amount = credVal;
+            isCredit = true;
+          } else {
+            amount = Math.abs(debVal);
+          }
+        } else {
+          const rawVal = parseAmountVal(r[debitCol]);
+          amount = Math.abs(rawVal);
+        }
+
+        if (!amount || amount <= 0) continue;
 
         const date = normalizeDate(r[dateCol]);
-        const fingerprint = `${date}_${merchant}_${amount}`;
+        const fingerprint = `${date}_${merchant}_${amount}_${isCredit ? 'C' : 'D'}`;
         if (state.transactions.some(t => t.fingerprint === fingerprint)) continue;
 
-        const detectedCat = classifyMerchant(merchant, amount);
+        const detectedCat = classifyTransaction(merchant, amount, isCredit);
         pendingImportRows.push({
           id: 'pend_' + i,
           merchant,
@@ -938,7 +1066,7 @@
           date,
           fingerprint,
           category: detectedCat,
-          needsQuery: !detectedCat
+          resolved: Boolean(detectedCat)
         });
       }
 
@@ -951,21 +1079,29 @@
     }
 
     function openImportModal() {
-      const unknown = pendingImportRows.filter(r => r.needsQuery);
-      const autoCount = pendingImportRows.length - unknown.length;
+      const unresolved = pendingImportRows.filter(r => !r.resolved);
+      const totalCount = pendingImportRows.length;
+      const resolvedCount = totalCount - unresolved.length;
+      const pct = totalCount > 0 ? Math.round((resolvedCount / totalCount) * 100) : 100;
       const uniqueMonths = [...new Set(pendingImportRows.map(r => r.date.slice(0, 7)))].sort();
 
-      document.getElementById('importSummaryText').textContent =
-        `זוהו ${autoCount} תנועות אוטומטית. ${unknown.length > 0 ? `נותרו ${unknown.length} תנועות לשיוך:` : 'הכל זוהה בהצלחה!'}`;
       document.getElementById('importMonthsText').textContent =
         `📅 הקובץ מכיל נתונים עבור ${uniqueMonths.length} חודשים (${uniqueMonths[0]} עד ${uniqueMonths[uniqueMonths.length - 1]})`;
 
+      document.getElementById('importProgressLabel').textContent =
+        unresolved.length > 0 ? `נותרו עוד ${unresolved.length} תנועות למיון` : '🎉 כל התנועות מוינו בהצלחה!';
+      document.getElementById('importProgressCount').textContent = `${resolvedCount} / ${totalCount} הושלמו (${pct}%)`;
+      document.getElementById('importProgressBar').style.width = `${pct}%`;
+
+      const validToImportCount = pendingImportRows.filter(r => r.category !== 'EXCLUDE').length;
+      document.getElementById('readyToImportCount').textContent = validToImportCount;
+
       const list = document.getElementById('unknownMerchantsList');
-      if (unknown.length === 0) {
-        list.innerHTML = `<div class="text-center py-6 text-emerald-600 font-semibold text-sm">✨ כל התנועות בקובץ שויכו בהצלחה! לחץ למטה לאישור.</div>`;
+      if (unresolved.length === 0) {
+        list.innerHTML = `<div class="text-center py-8 text-emerald-600 font-bold text-sm">✨ סיימת למיין את כל התנועות! לחץ למטה לאישור וייבוא לדשבורד.</div>`;
       } else {
-        list.innerHTML = unknown.map(item => `
-          <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-2">
+        list.innerHTML = unresolved.map(item => `
+          <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-2 transition-all">
             <div class="flex justify-between items-center">
               <div>
                 <span class="font-bold text-xs text-slate-800 block">${item.merchant}</span>
@@ -974,12 +1110,15 @@
               <span class="font-extrabold text-xs text-blue-600">${formatCurrency(item.amount)}</span>
             </div>
             <div class="flex flex-wrap gap-1.5">
+              <button type="button" onclick="assignImportCategory('${item.id}', 'INCOME')" class="text-[11px] px-2.5 py-1 rounded-lg border font-bold bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border-emerald-300 transition">
+                💰 זו הכנסה
+              </button>
               ${state.categories.map(c => `
-                <button type="button" onclick="assignImportCategory('${item.id}', '${c.id}')" class="text-[11px] px-2 py-1 rounded-lg border transition ${item.category === c.id ? 'bg-blue-600 text-white border-blue-600 font-bold' : 'bg-white text-slate-700 hover:bg-blue-50 border-slate-200'}">
+                <button type="button" onclick="assignImportCategory('${item.id}', '${c.id}')" class="text-[11px] px-2 py-1 rounded-lg border bg-white text-slate-700 hover:bg-blue-50 border-slate-200 transition">
                   ${c.icon} ${c.name}
                 </button>
               `).join('')}
-              <button type="button" onclick="assignImportCategory('${item.id}', 'EXCLUDE')" class="text-[11px] px-2 py-1 rounded-lg border transition ${item.category === 'EXCLUDE' ? 'bg-rose-600 text-white border-rose-600 font-bold' : 'bg-rose-50 text-rose-700 hover:bg-rose-100 border-rose-200'}">
+              <button type="button" onclick="assignImportCategory('${item.id}', 'EXCLUDE')" class="text-[11px] px-2 py-1 rounded-lg border bg-rose-50 text-rose-700 hover:bg-rose-100 border-rose-200 transition">
                 🚫 לא לכלול
               </button>
               <button type="button" onclick="openNewCategoryModal()" class="text-[11px] px-2 py-1 rounded-lg border border-dashed border-blue-400 bg-blue-50/70 text-blue-700 font-bold hover:bg-blue-100 transition">
@@ -992,39 +1131,41 @@
       document.getElementById('importModal').classList.remove('hidden');
     }
 
+    function getCategoryDisplayName(catId) {
+      if (catId === 'INCOME') return 'הכנסה 💰';
+      if (catId === 'EXCLUDE') return 'לא לכלול בהוצאות';
+      return state.categories.find(c => c.id === catId)?.name || '';
+    }
+
     function assignImportCategory(rowId, catId) {
       const target = pendingImportRows.find(r => r.id === rowId);
       if (!target) return;
       target.category = catId;
+      target.resolved = true; // מסיר מיד מרשימת הממתינים למיון
 
       const cleanMerchant = target.merchant.trim().toLowerCase();
-      // בדיקת תנועות דומות בקובץ
       const sameMerchantRows = pendingImportRows.filter(r =>
         r.id !== target.id &&
-        r.needsQuery &&
+        !r.resolved &&
         r.merchant.trim().toLowerCase() === cleanMerchant
       );
       const sameAmountRows = pendingImportRows.filter(r =>
         r.id !== target.id &&
-        r.needsQuery &&
+        !r.resolved &&
         r.amount === target.amount
       );
 
       if (sameMerchantRows.length > 0 || sameAmountRows.length > 0) {
-        const catName = catId === 'EXCLUDE'
-          ? 'לא לכלול בהוצאות'
-          : (state.categories.find(c => c.id === catId)?.name || '');
-
+        const catName = getCategoryDisplayName(catId);
         pendingRecurringContext = { target, catId, sameMerchantRows, sameAmountRows, cleanMerchant };
 
         document.getElementById('recurringChoiceDesc').textContent =
-          `שייכת את "${target.merchant}" (${formatCurrency(target.amount)}) לקטגוריה "${catName}". איך להחיל על שאר התנועות הדומות בקובץ?`;
+          `שייכת את "${target.merchant}" (${formatCurrency(target.amount)}) ל"${catName}". איך להחיל על שאר התנועות הדומות בקובץ?`;
 
         const btnExact = document.getElementById('btnMatchExactAmount');
         if (sameAmountRows.length > 0) {
           btnExact.classList.remove('hidden');
           document.getElementById('lblExactAmount').textContent = `רק אם הסכום זהה (${formatCurrency(target.amount)}) — ${sameAmountRows.length} תנועות נוספות`;
-          document.getElementById('subExactAmount').textContent = `מתאים להוראות קבע או תשלומים קבועים בסכום מדויק`;
         } else {
           btnExact.classList.add('hidden');
         }
@@ -1032,7 +1173,7 @@
         const btnMerchant = document.getElementById('btnMatchAllMerchant');
         if (sameMerchantRows.length > 0) {
           btnMerchant.classList.remove('hidden');
-          document.getElementById('lblAllMerchant').textContent = `כל ההוצאות תחת "${target.merchant}" — ${sameMerchantRows.length} תנועות נוספות`;
+          document.getElementById('lblAllMerchant').textContent = `כל התנועות תחת "${target.merchant}" — ${sameMerchantRows.length} תנועות נוספות`;
         } else {
           btnMerchant.classList.add('hidden');
         }
@@ -1041,7 +1182,6 @@
         return;
       }
 
-      // אם אין דומות, שומר כלל מדויק וממשיך
       state.learnedRules[`${cleanMerchant}_${target.amount}`] = catId;
       openImportModal();
     }
@@ -1054,15 +1194,16 @@
         state.learnedRules[`${cleanMerchant}_${target.amount}`] = catId;
         sameAmountRows.forEach(sr => {
           sr.category = catId;
+          sr.resolved = true;
           state.learnedRules[`${sr.merchant.trim().toLowerCase()}_${sr.amount}`] = catId;
         });
       } else if (mode === 'ALL_MERCHANT') {
         state.learnedRules[cleanMerchant] = catId;
         sameMerchantRows.forEach(sr => {
           sr.category = catId;
+          sr.resolved = true;
         });
       } else {
-        // ONLY_THIS - לא דורס את הכלל הכללי עבור סכומים אחרים
         state.learnedRules[`${cleanMerchant}_${target.amount}`] = catId;
       }
 
@@ -1078,19 +1219,24 @@
 
     function confirmImport() {
       let latestDate = null;
-      let importedCount = 0;
+      let importedExpenses = 0;
+      let importedIncomes = 0;
+
       pendingImportRows.forEach((item, i) => {
         if (item.category === 'EXCLUDE') return;
         if (!latestDate || item.date > latestDate) latestDate = item.date;
+        const isInc = item.category === 'INCOME';
         state.transactions.push({
           id: 'imp_' + Date.now() + '_' + i,
+          type: isInc ? 'income' : 'expense',
           amount: item.amount,
-          category: item.category || 'other',
+          category: isInc ? 'INCOME' : (item.category || 'other'),
           note: item.merchant,
           date: item.date,
           fingerprint: item.fingerprint
         });
-        importedCount++;
+        if (isInc) importedIncomes++;
+        else importedExpenses++;
       });
 
       if (latestDate) {
@@ -1100,14 +1246,16 @@
       saveState();
       closeImportModal();
       renderAll();
-      alert(`יובאו בהצלחה ${importedCount} תנועות וחולקו אוטומטית לפי החודשים המתאימים!`);
+      alert(`הייבוא הושלם בהצלחה!\n• ${importedExpenses} הוצאות\n• ${importedIncomes} הכנסות\nכל התנועות חולקו אוטומטית לפי החודשים המתאימים.`);
     }
 
     function exportCSV() {
-      let csv = '\uFEFFתאריך,קטגוריה,תיאור,סכום\n';
+      let csv = '\uFEFFתאריך,סוג,קטגוריה,תיאור,סכום\n';
       state.transactions.forEach(t => {
-        const cat = state.categories.find(c => c.id === t.category)?.name || 'שונות';
-        csv += `${t.date},"${cat}","${t.note || ''}",${t.amount}\n`;
+        const isInc = t.type === 'income';
+        const typeStr = isInc ? 'הכנסה' : 'הוצאה';
+        const cat = isInc ? 'הכנסה' : (state.categories.find(c => c.id === t.category)?.name || 'שונות');
+        csv += `${t.date},${typeStr},"${cat}","${t.note || ''}",${t.amount}\n`;
       });
       const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
