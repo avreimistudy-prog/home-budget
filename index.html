@@ -4,6 +4,11 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>תקציב ביתי חכם</title>
+  <link rel="manifest" href="./manifest.json" />
+  <meta name="theme-color" content="#2563eb" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="תקציב חכם" />
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
   <style>
@@ -1074,7 +1079,7 @@
       if (isCreditColumn) {
         if (FIXED_INCOME_KEYWORDS.some(w => clean.includes(w.toLowerCase()))) return 'INCOME_FIXED';
         if (VARIABLE_INCOME_KEYWORDS.some(w => clean.includes(w.toLowerCase()))) return 'INCOME_VAR';
-        return null; // אם הגיע מזכות ולא ידוע אם קבוע או משתנה — ישאל רק קבוע מול משתנה!
+        return null;
       }
 
       for (const [catId, words] of Object.entries(BUILTIN_KEYWORDS)) {
@@ -1355,7 +1360,6 @@
             }
           }
 
-          // הפרדה נקייה: אם התנועה מעמודת זכות -> מציג רק אופציות הכנסה; אם מחובה -> מציג רק קטגוריות הוצאה!
           const actionButtonsHtml = item.isCredit
             ? `
               <button type="button" onclick="assignImportCategory('${item.id}', 'INCOME_FIXED')" class="text-xs px-3 py-1.5 rounded-lg border font-bold bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border-emerald-300 transition">
@@ -1554,6 +1558,12 @@
     }
 
     renderAll();
+
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js').catch(() => {});
+      });
+    }
   </script>
 </body>
 </html>
