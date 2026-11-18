@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>תקציב ביתי חכם</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #f8fafc; -webkit-tap-highlight-color: transparent; }
+    .tab-active { color: #2563eb; border-top: 3px solid #2563eb; font-weight: 700; }
+    .tab-inactive { color: #64748b; border-top: 3px solid transparent; }
+    .hide-scrollbar::-webkit-scrollbar { display: none; }
+  </style>
+</head>
+<body class="pb-24 text-slate-800 select-none">
+
+  <!-- Top Header -->
+  <header class="bg-white shadow-sm sticky top-0 z-30 px-4 py-3">
+    <div class="max-w-md mx-auto flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <button onclick="changeMonth(-1)" class="p-1.5 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold">◀</button>
+        <span id="currentMonthLabel" class="font-bold text-base min-w-[110px] text-center">נובמבר 2026</span>
+        <button onclick="changeMonth(1)" class="p-1.5 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold">▶</button>
+      </div>
+      <div class="flex items-center gap-2">
+        <label class="cursor-pointer bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-3 py-2 rounded-lg shadow-sm flex items-center gap-1 transition">
+          <span>📥 ייבוא קובץ</span>
+          <input type="file" id="fileUploadInput" accept=".xlsx,.xls,.csv" class="hidden" onchange="handleFileUpload(event)" />
+        </label>
+        <button onclick="resetAllData()" title="איפוס נתונים" class="bg-rose-50 hover:bg-rose-100 text-rose-600 text-xs font-semibold px-2.5 py-2 rounded-lg border border-rose-200 transition">
+          🗑️ איפוס
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="max-w-md mx-auto p-4">
+
+    <!-- VIEW 1: DASHBOARD -->
+    <section id="view-dashboard" class="space-y-4">
+      <!-- Hero Card -->
+      <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-100">
+        <div class="flex justify-between items-center mb-1">
+          <span class="text-xs font-semibold text-slate-500">יתרה פנויה להוצאות משתנות</span>
+          <span id="pacingBadge" class="text-xs font-bold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700">קצב תקין</span>
+        </div>
+        <div id="heroRemaining" class="text-4xl font-extrabold text-slate-900 my-1">₪0</div>
+        <div class="text-xs text-slate-500 mb-3">
+          נוצלו <span id="heroSpent" class="font-bold text-slate-700">₪0</span> מתוך <span id="heroBudget" class="font-bold text-slate-700">₪0</span>
+        </div>
+
+        <!-- Progress Bar -->
+        <div class="w-full bg-slate-100 rounded-full h-3 overflow-hidden relative">
+          <div id="budgetProgressBar" class="bg-emerald-500 h-3 rounded-full transition-all duration-300" style="width: 0%"></div>
+        </div>
+        <div class="flex justify-between text-[11px] text-slate-400 mt-1.5">
+          <span id="spentPercentLabel">0% מהתקציב נוצל</span>
+          <span id="monthProgressLabel">התקדמות החודש: 50%</span>
+        </div>
+      </div>
+
+      <!-- Summary Mini Cards -->
+      <div class="grid grid-cols-3 gap-2.5 text-center">
+        <div class="bg-white p-3 rounded-xl border border-slate-100 shadow-sm">
+          <div class="text-[11px] text-slate-400">הכנסות</div>
+          <div id="dashIncome" class="font-bold text-sm text-emerald-600 mt-0.5">₪0</div>
+        </div>
+        <div class="bg-white p-3 rounded-xl border border-slate-100 shadow-sm">
+          <div class="text-[11px] text-slate-400">קבועות וחיסכון</div>
+          <div id="dashFixed" class="font-bold text-sm text-slate-700 mt-0.5">₪0</div>
+        </div>
+        <div class="bg-white p-3 rounded-xl border border-slate-100 shadow-sm">
+          <div class="text-[11px] text-slate-400">משתנות בפועל</div>
+          <div id="dashVariable" class="font-bold text-sm text-blue-600 mt-0.5">₪0</div>
+        </div>
+      </div>
+
+      <!-- Categories Breakdown -->
+      <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100">
+        <h2 class="font-bold text-sm text-slate-700 mb-3">פירוט לפי קטגוריות (משתנות)</h2>
+        <div id="categoryCardsList" class="space-y-3"></div>
+      </div>
+    </section>
+
+    <!-- VIEW 2: TRANSACTIONS -->
+    <section id="view-transactions" class="hidden space-y-3">
+      <div class="bg-white p-3 rounded-xl shadow-sm border border-slate-100 flex gap-2">
+        <input type="text" id="searchInput" oninput="renderTransactions()" placeholder="חיפוש בית עסק או הערה..." class="w-full text-sm bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500" />
+        <select id="filterCategory" onchange="renderTransactions()" class="text-sm bg-slate-50 border border-slate-200 rounded-lg px-2 py-2 focus:outline-none">
+          <option value="ALL">כל הקטגוריות</option>
+        </select>
+      </div>
+      <div id="transactionsList" class="space-y-2"></div>
+    </section>
+
+    <!-- VIEW 3: BUDGET SETUP -->
+    <section id="view-budget" class="hidden space-y-4">
+      <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 space-y-3">
+        <h2 class="font-bold text-base text-slate-800">1. הכנסות והוצאות קבועות</h2>
+        <div>
+          <label class="block text-xs font-semibold text-slate-500 mb-1">סך הכנסות נטו החודש (₪)</label>
+          <input type="number" id="inputIncome" onchange="saveBudgetSettings()" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-base font-bold bg-slate-50" />
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-500 mb-1">הוצאות קבועות + הפרשה לחיסכון (₪)</label>
+          <input type="number" id="inputFixed" onchange="saveBudgetSettings()" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-base font-bold bg-slate-50" />
+        </div>
+        <div class="bg-blue-50 p-3 rounded-xl flex justify-between items-center">
+          <span class="text-xs font-semibold text-blue-800">סכום פנוי לחלוקה למשתנות:</span>
+          <span id="availableToAllocate" class="font-extrabold text-blue-700 text-base">₪0</span>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 space-y-3">
+        <div class="flex justify-between items-center">
+          <h2 class="font-bold text-base text-slate-800">2. תקרה לכל קטגוריה</h2>
+          <span id="unallocatedBadge" class="text-xs font-bold px-2 py-1 rounded bg-slate-100 text-slate-600">נותר לחלק: ₪0</span>
+        </div>
+        <div id="categoryBudgetsInputs" class="space-y-2.5"></div>
+      </div>
+
+      <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 flex justify-between items-center">
+        <button onclick="exportCSV()" class="bg-slate-800 text-white text-xs font-semibold px-4 py-2.5 rounded-xl">📤 ייצוא לאקסל (CSV)</button>
+        <button onclick="resetAllData()" class="bg-rose-600 text-white text-xs font-semibold px-4 py-2.5 rounded-xl">🗑️ איפוס מלא</button>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Floating Add Button -->
+  <button onclick="openAddModal()" class="fixed bottom-20 left-5 bg-blue-600 hover:bg-blue-700 text-white w-14 h-14 rounded-full shadow-lg flex items-center justify-center text-3xl font-light z-30 transition transform active:scale-95">
+    +
+  </button>
+
+  <!-- Bottom Navigation -->
+  <nav class="fixed bottom-0 inset-x-0 bg-white border-t border-slate-200 z-30">
+    <div class="max-w-md mx-auto grid grid-cols-3 text-center">
+      <button id="nav-dashboard" onclick="switchTab('dashboard')" class="py-3 text-xs tab-active flex flex-col items-center gap-1">
+        <span class="text-lg">📊</span>
+        <span>מבט חטוף</span>
+      </button>
+      <button id="nav-transactions" onclick="switchTab('transactions')" class="py-3 text-xs tab
