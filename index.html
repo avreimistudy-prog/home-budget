@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>תקציב ביתי חכם</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #f8fafc; -webkit-tap-highlight-color: transparent; }
+    .tab-active { color: #2563eb; border-top: 3px solid #2563eb; font-weight: 700; }
+    .tab-inactive { color: #64748b; border-top: 3px solid transparent; }
+    .hide-scrollbar::-webkit-scrollbar { display: none; }
+  </style>
+</head>
+<body class="pb-24 text-slate-800 select-none">
+
+  <!-- Top Header -->
+  <header class="bg-white shadow-sm sticky top-0 z-30 px-4 py-3">
+    <div class="max-w-md mx-auto flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <button onclick="changeMonth(-1)" class="p-1.5 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold">◀</button>
+        <span id="currentMonthLabel" class="font-bold text-base min-w-[110px] text-center">נובמבר 2026</span>
+        <button onclick="changeMonth(1)" class="p-1.5 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold">▶</button>
+      </div>
+      <div class="flex items-center gap-2">
+        <label class="cursor-pointer bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-3 py-2 rounded-lg shadow-sm flex items-center gap-1 transition">
+          <span>📥 ייבוא קובץ</span>
+          <input type="file" id="fileUploadInput" accept=".xlsx,.xls,.csv" class="hidden" onchange="handleFileUpload(event)" />
+        </label>
+        <button onclick="resetAllData()" title="איפוס נתונים" class="bg-rose-50 hover:bg-rose-100 text-rose-600 text-xs font-semibold px-2.5 py-2 rounded-lg border border-rose-200 transition">
+          🗑️ איפוס
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="max-w-md mx-auto p-4">
+
+    <!-- VIEW 1: DASHBOARD -->
+    <section id="view-dashboard" class="space-y-4">
+      <!-- Hero Card -->
+      <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-100">
+        <div class="flex justify-between items-center mb-1">
+          <span class="text-xs font-semibold text-slate-500">יתרה פנויה להוצאות משתנות</span>
+          <span id="pacingBadge" class="text-xs font-bold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700">קצב תקין</span>
+        </div>
+        <div id="heroRemaining" class="text-4xl font-extrabold text-slate-900 my-1">₪0</div>
+        <div class="text-xs text-slate-500 mb-3">
+          נוצלו <span id="heroSpent" class="font-bold text-slate-700">₪0</span> מתוך <span id="heroBudget" class="font-bold text-slate-700">₪0</span>
+        </div>
+
+        <!-- Progress Bar -->
+        <div class="w-full bg-slate-100 rounded-full h-3 overflow-hidden relative">
+          <div id="budgetProgressBar" class="bg-emerald-500 h-3 rounded-full transition-all duration-300" style="width: 0%"></div>
+        </div>
+        <div class="flex justify-between text-[11px] text-slate-400 mt-1.5">
+          <span id="spentPercentLabel">0% מהתקציב נוצל</span>
+          <span id="monthProgressLabel">התקדמות החודש: 50%</span>
+        </div>
+      </div>
+
+      <!-- Summary Mini Cards -->
+      <div class="grid grid-cols-3 gap-2.5 text-center">
+        <div class="bg-white p-3 rounded-xl border border-slate-100 shadow-sm">
+          <div class="text-[11px] text-slate-400">הכנסות</div>
+          <div id="dashIncome" class="font-bold text-sm text-emerald-600 mt-0.5">₪0</div>
+        </div>
+        <div class="bg-white p-3 rounded-xl border border-slate-100 shadow-sm">
+          <div class="text-[11px] text-slate-400">קבועות וחיסכון</div>
+          <div id="dashFixed" class="font-bold text-sm text-slate-700 mt-0.5">₪0</div>
+        </div>
+        <div class="bg-white p-3 rounded-xl border border-slate-100 shadow-sm">
+          <div class="text-[11px] text-slate-400">משתנות בפועל</div>
+          <div id="dashVariable" class="font-bold text-sm text-blue-600 mt-0.5">₪0</div>
+        </div>
+      </div>
+
+      <!-- Categories Breakdown -->
+      <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100">
+        <h2 class="font-bold text-sm text-slate-700 mb-3">פירוט לפי קטגוריות (משתנות)</h2>
+        <div id="categoryCardsList" class="space-y-3"></div>
+      </div>
+    </section>
+
+    <!-- VIEW 2: TRANSACTIONS -->
+    <section id="view-transactions" class="hidden space-y-3">
+      <div class="bg-white p-3 rounded-xl shadow-sm border border-slate-100 flex gap-2">
+        <input type="text" id="searchInput" oninput="renderTransactions()" placeholder="חיפוש בית עסק או הערה..." class="w-full text-sm bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500" />
+        <select id="filterCategory" onchange="renderTransactions()" class="text-sm bg-slate-50 border border-slate-200 rounded-lg px-2 py-2 focus:outline-none">
+          <option value="ALL">כל הקטגוריות</option>
+        </select>
+      </div>
+      <div id="transactionsList" class="space-y-2"></div>
+    </section>
+
+    <!-- VIEW 3: BUDGET SETUP -->
+    <section id="view-budget" class="hidden space-y-4">
+      <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 space-y-3">
+        <h2 class="font-bold text-base text-slate-800">1. הכנסות והוצאות קבועות</h2>
+        <div>
+          <label class="block text-xs font-semibold text-slate-500 mb-1">סך הכנסות נטו החודש (₪)</label>
+          <input type="number" id="inputIncome" onchange="saveBudgetSettings()" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-base font-bold bg-slate-50" />
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-500 mb-1">הוצאות קבועות + הפרשה לחיסכון (₪)</label>
+          <input type="number" id="inputFixed" onchange="saveBudgetSettings()" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-base font-bold bg-slate-50" />
+        </div>
+        <div class="bg-blue-50 p-3 rounded-xl flex justify-between items-center">
+          <span class="text-xs font-semibold text-blue-800">סכום פנוי לחלוקה למשתנות:</span>
+          <span id="availableToAllocate" class="font-extrabold text-blue-700 text-base">₪0</span>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 space-y-3">
+        <div class="flex justify-between items-center">
+          <h2 class="font-bold text-base text-slate-800">2. תקרה לכל קטגוריה</h2>
+          <span id="unallocatedBadge" class="text-xs font-bold px-2 py-1 rounded bg-slate-100 text-slate-600">נותר לחלק: ₪0</span>
+        </div>
+        <div id="categoryBudgetsInputs" class="space-y-2.5"></div>
+      </div>
+
+      <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 flex justify-between items-center">
+        <button onclick="exportCSV()" class="bg-slate-800 text-white text-xs font-semibold px-4 py-2.5 rounded-xl">📤 ייצוא לאקסל (CSV)</button>
+        <button onclick="resetAllData()" class="bg-rose-600 text-white text-xs font-semibold px-4 py-2.5 rounded-xl">🗑️ איפוס מלא</button>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Floating Add Button -->
+  <button onclick="openAddModal()" class="fixed bottom-20 left-5 bg-blue-600 hover:bg-blue-700 text-white w-14 h-14 rounded-full shadow-lg flex items-center justify-center text-3xl font-light z-30 transition transform active:scale-95">
+    +
+  </button>
+
+  <!-- Bottom Navigation -->
+  <nav class="fixed bottom-0 inset-x-0 bg-white border-t border-slate-200 z-30">
+    <div class="max-w-md mx-auto grid grid-cols-3 text-center">
+      <button id="nav-dashboard" onclick="switchTab('dashboard')" class="py-3 text-xs tab-active flex flex-col items-center gap-1">
+        <span class="text-lg">📊</span>
+        <span>מבט חטוף</span>
+      </button>
+      <button id="nav-transactions" onclick="switchTab('transactions')" class="py-3 text-xs tab-inactive flex flex-col items-center gap-1">
+        <span class="text-lg">🧾</span>
+        <span>תנועות</span>
+      </button>
+      <button id="nav-budget" onclick="switchTab('budget')" class="py-3 text-xs tab-inactive flex flex-col items-center gap-1">
+        <span class="text-lg">⚙️</span>
+        <span>תכנון תקציב</span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- Quick Add Modal -->
+  <div id="addModal" class="fixed inset-0 bg-black/50 z-50 hidden flex items-end sm:items-center justify-center">
+    <div class="bg-white w-full max-w-md rounded-t-3xl sm:rounded-2xl p-5 space-y-4">
+      <div class="flex justify-between items-center">
+        <h3 class="font-bold text-lg">הוספת הוצאה מהירה</h3>
+        <button onclick="closeAddModal()" class="text-slate-400 hover:text-slate-600 text-xl font-bold">✕</button>
+      </div>
+      <div>
+        <label class="text-xs text-slate-500">סכום (₪)</label>
+        <input type="number" id="quickAmount" inputmode="decimal" placeholder="0" class="w-full text-3xl font-extrabold border-b-2 border-blue-500 py-2 focus:outline-none text-center" />
+      </div>
+      <div>
+        <label class="text-xs text-slate-500 mb-2 block">בחר קטגוריה:</label>
+        <div id="quickCategoryGrid" class="grid grid-cols-4 gap-2"></div>
+      </div>
+      <details class="text-xs text-slate-600 bg-slate-50 p-3 rounded-xl">
+        <summary class="cursor-pointer font-semibold text-blue-600">+ הערה, תאריך או תשלומים</summary>
+        <div class="mt-3 space-y-2.5">
+          <input type="text" id="quickNote" placeholder="שם בית עסק / הערה (אופציונלי)" class="w-full border border-slate-200 rounded-lg px-3 py-2 bg-white" />
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="block text-[11px] text-slate-400">תאריך</label>
+              <input type="date" id="quickDate" class="w-full border border-slate-200 rounded-lg px-2 py-1.5 bg-white" />
+            </div>
+            <div>
+              <label class="block text-[11px] text-slate-400">מספר תשלומים</label>
+              <select id="quickInstallments" class="w-full border border-slate-200 rounded-lg px-2 py-1.5 bg-white">
+                <option value="1">תשלום 1 (רגיל)</option>
+                <option value="2">2 תשלומים</option>
+                <option value="3">3 תשלומים</option>
+                <option value="4">4 תשלומים</option>
+                <option value="6">6 תשלומים</option>
+                <option value="12">12 תשלומים</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </details>
+      <button onclick="saveQuickExpense()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 rounded-xl shadow">שמור הוצאה</button>
+    </div>
+  </div>
+
+  <!-- Import Query Modal -->
+  <div id="importModal" class="fixed inset-0 bg-black/60 z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white w-full max-w-md rounded-2xl p-5 max-h-[85vh] flex flex-col">
+      <div class="flex justify-between items-center pb-3 border-b">
+        <div>
+          <h3 class="font-bold text-base text-slate-800">ניתוח קובץ שהועלה</h3>
+          <p id="importSummaryText" class="text-xs text-slate-500 mt-0.5"></p>
+        </div>
+        <button onclick="closeImportModal()" class="text-slate-400 hover:text-slate-600 text-xl font-bold">✕</button>
+      </div>
+      <div id="unknownMerchantsList" class="overflow-y-auto my-3 space-y-3 flex-1 pr-1"></div>
+      <div class="pt-3 border-t flex gap-2">
+        <button onclick="confirmImport()" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl text-sm">
+          אשר וייבא הכל לדשבורד
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const CATEGORIES = [
+      { id: 'food', name: 'מזון וסופר', icon: '🛒', defaultBudget: 2500 },
+      { id: 'dining', name: 'אוכל בחוץ', icon: '☕', defaultBudget: 700 },
+      { id: 'transport', name: 'תחבורה ורכב', icon: '⛽', defaultBudget: 1000 },
+      { id: 'kids', name: 'ילדים וחינוך', icon: '🧸', defaultBudget: 800 },
+      { id: 'health', name: 'בריאות ופארם', icon: '💊', defaultBudget: 400 },
+      { id: 'clothing', name: 'ביגוד והנעלה', icon: '👕', defaultBudget: 500 },
+      { id: 'leisure', name: 'פנאי ומתנות', icon: '🎁', defaultBudget: 500 },
+      { id: 'other', name: 'שונות / בלתי צפוי', icon: '📦', defaultBudget: 600 }
+    ];
+
+    const BUILTIN_KEYWORDS = {
+      food: ['שופרסל', 'רמי לוי', 'אושר עד', 'ויקטורי', 'יוחננוף', 'חצי חינם', 'מחסני השוק', 'יינות ביתן', 'קרפור', 'טיב טעם', 'סופר', 'מכולת', 'מאפייה', 'ירקות'],
+      dining: ['ארומה', 'מקדונלדס', 'פיצה', 'שווארמה', 'פלאפל', 'קפה', 'מסעדה', 'וולט', 'wolt', 'תן ביס', 'גולדה', 'בורגר'],
+      transport: ['פז', 'דלק', 'סונול', 'דור אלון', 'ten', 'פנגו', 'סלופארק', 'רב קו', 'רכבת', 'אגד', 'דן', 'קווים', 'חניון', 'כביש 6'],
+      health: ['סופר פארם', 'סופר-פארם', 'בי פארם', 'מכבי', 'כללית', 'מאוחדת', 'לאומית', 'בית מרקחת', 'רופא'],
+      clothing: ['זארה', 'פוקס', 'קסטרו', 'רנואר', 'טרמינל', 'אמריקן איגל', 'h&m', 'דלתא', 'הודיס', 'נעלי'],
+      kids: ['גן', 'צהרון', 'חוג', 'צעצועים', 'שילב', 'מוצצים', 'ספרים', 'סטימצקי', 'צומת ספרים'],
+      leisure: ['סינמה', 'יס פלאנט', 'הופעה', 'מתנה', 'פרחים', 'ספא', 'מלון', 'טיול']
+    };
+
+    const STORAGE_KEY = 'smart_budget_v2';
+    let currentYear = new Date().getFullYear();
+    let currentMonth = new Date().getMonth(); // 0-11
+    let selectedQuickCat = 'food';
+    let pendingImportRows = [];
+
+    function getDefaultState() {
+      const catBudgets = {};
+      CATEGORIES.forEach(c => catBudgets[c.id] = c.defaultBudget);
+      return {
+        income: 15000,
+        fixed: 8000,
+        catBudgets,
+        transactions: [],
+        learnedRules: {}
+      };
+    }
+
+    let state = loadState();
+
+    function loadState() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return getDefaultState();
+        const parsed = JSON.parse(raw);
+        return { ...getDefaultState(), ...parsed };
+      } catch (e) {
+        return getDefaultState();
+      }
+    }
+
+    function saveState() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    }
+
+    function resetAllData() {
+      if (confirm('האם לאפס את כל הנתונים והתנועות ולהתחיל מדף חלק?')) {
+        state = getDefaultState();
+        saveState();
+        renderAll();
+        alert('הנתונים אופסו בהצלחה!');
+      }
+    }
+
+    function switchTab(tabName) {
+      ['dashboard', 'transactions', 'budget'].forEach(t => {
+        const viewEl = document.getElementById('view-' + t);
+        const navEl = document.getElementById('nav-' + t);
+        if (t === tabName) {
+          viewEl.classList.remove('hidden');
+          navEl.classList.remove('tab-inactive');
+          navEl.classList.add('tab-active');
+        } else {
+          viewEl.classList.add('hidden');
+          navEl.classList.remove('tab-active');
+          navEl.classList.add('tab-inactive');
+        }
+      });
+      renderAll();
+    }
+
+    function changeMonth(delta) {
+      currentMonth += delta;
+      if (currentMonth > 11) { currentMonth = 0; currentYear++; }
+      if (currentMonth < 0) { currentMonth = 11; currentYear--; }
+      renderAll();
+    }
+
+    function getMonthKey(y, m) {
+      return `${y}-${String(m + 1).padStart(2, '0')}`;
+    }
+
+    function formatCurrency(num) {
+      return '₪' + Math.round(num).toLocaleString('he-IL');
+    }
+
+    function renderAll() {
+      const monthNames = ['ינואר', 'פברואר', 'מרץ', 'אפריל', 'מאי', 'יוני', 'יולי', 'אוגוסט', 'ספטמבר', 'אוקטובר', 'נובמבר', 'דצמבר'];
+      document.getElementById('currentMonthLabel').textContent = `${monthNames[currentMonth]} ${currentYear}`;
+      renderDashboard();
+      renderTransactions();
+      renderBudgetSettings();
+    }
+
+    function getCurrentMonthTransactions() {
+      const targetPrefix = getMonthKey(currentYear, currentMonth);
+      return state.transactions.filter(tx => tx.date && tx.date.startsWith(targetPrefix));
+    }
+
+    function renderDashboard() {
+      const txs = getCurrentMonthTransactions();
+      const totalVariableBudget = Object.values(state.catBudgets).reduce((a, b) => a + Number(b || 0), 0);
+      const totalSpent = txs.reduce((sum, tx) => sum + Number(tx.amount || 0), 0);
+      const remaining = totalVariableBudget - totalSpent;
+
+      document.getElementById('heroRemaining').textContent = formatCurrency(remaining);
+      document.getElementById('heroRemaining').className = `text-4xl font-extrabold my-1 ${remaining < 0 ? 'text-rose-600' : 'text-slate-900'}`;
+      document.getElementById('heroSpent').textContent = formatCurrency(totalSpent);
+      document.getElementById('heroBudget').textContent = formatCurrency(totalVariableBudget);
+
+      document.getElementById('dashIncome').textContent = formatCurrency(state.income);
+      document.getElementById('dashFixed').textContent = formatCurrency(state.fixed);
+      document.getElementById('dashVariable').textContent = formatCurrency(totalSpent);
+
+      const spentPct = totalVariableBudget > 0 ? Math.min(100, Math.round((totalSpent / totalVariableBudget) * 100)) : 0;
+      const now = new Date();
+      const isThisMonth = now.getFullYear() === currentYear && now.getMonth() === currentMonth;
+      const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+      const monthPct = isThisMonth ? Math.round((now.getDate() / daysInMonth) * 100) : 100;
+
+      const bar = document.getElementById('budgetProgressBar');
+      const badge = document.getElementById('pacingBadge');
+      bar.style.width = `${spentPct}%`;
+
+      if (remaining < 0) {
+        bar.className = 'bg-rose-500 h-3 rounded-full transition-all';
+        badge.className = 'text-xs font-bold px-2.5 py-0.5 rounded-full bg-rose-100 text-rose-700';
+        badge.textContent = 'חריגה מהתקציב';
+      } else if (spentPct > monthPct + 10) {
+        bar.className = 'bg-amber-500 h-3 rounded-full transition-all';
+        badge.className = 'text-xs font-bold px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-700';
+        badge.textContent = 'קצב הוצאה מהיר';
+      } else {
+        bar.className = 'bg-emerald-500 h-3 rounded-full transition-all';
+        badge.className = 'text-xs font-bold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700';
+        badge.textContent = 'קצב תקין';
+      }
+
+      document.getElementById('spentPercentLabel').textContent = `${spentPct}% מהתקציב נוצל`;
+      document.getElementById('monthProgressLabel').textContent = `התקדמות החודש: ${monthPct}%`;
+
+      const list = document.getElementById('categoryCardsList');
+      list.innerHTML = '';
+      CATEGORIES.forEach(cat => {
+        const catBudget = Number(state.catBudgets[cat.id] || 0);
+        const catSpent = txs.filter(t => t.category === cat.id).reduce((s, t) => s + Number(t.amount), 0);
+        const catRem = catBudget - catSpent;
+        const pct = catBudget > 0 ? Math.min(100, Math.round((catSpent / catBudget) * 100)) : (catSpent > 0 ? 100 : 0);
+        const color = catRem < 0 ? 'bg-rose-500' : (pct > 80 ? 'bg-amber-500' : 'bg-blue-500');
+
+        list.innerHTML += `
+          <div>
+            <div class="flex justify-between text-xs mb-1">
+              <span class="font-semibold text-slate-700">${cat.icon} ${cat.name}</span>
+              <span class="${catRem < 0 ? 'text-rose-600 font-bold' : 'text-slate-500'}">
+                נותרו ${formatCurrency(catRem)} <span class="text-slate-400">/ ${formatCurrency(catBudget)}</span>
+              </span>
+            </div>
+            <div class="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+              <div class="${color} h-2 rounded-full" style="width: ${pct}%"></div>
+            </div>
+          </div>
+        `;
+      });
+    }
+
+    function renderTransactions() {
+      const filterSelect = document.getElementById('filterCategory');
+      if (filterSelect.options.length === 1) {
+        CATEGORIES.forEach(c => {
+          const opt = document.createElement('option');
+          opt.value = c.id;
+          opt.textContent = `${c.icon} ${c.name}`;
+          filterSelect.appendChild(opt);
+        });
+      }
+
+      const search = document.getElementById('searchInput').value.trim().toLowerCase();
+      const catFilter = filterSelect.value;
+      let txs = getCurrentMonthTransactions().slice().sort((a, b) => b.date.localeCompare(a.date));
+
+      if (catFilter !== 'ALL') txs = txs.filter(t => t.category === catFilter);
+      if (search) txs = txs.filter(t => (t.note || '').toLowerCase().includes(search));
+
+      const container = document.getElementById('transactionsList');
+      if (txs.length === 0) {
+        container.innerHTML = `<div class="text-center text-slate-400 text-sm py-10 bg-white rounded-2xl border border-slate-100">אין תנועות להצגה בחודש זה</div>`;
+        return;
+      }
+
+      container.innerHTML = txs.map(tx => {
+        const cat = CATEGORIES.find(c => c.id === tx.category) || CATEGORIES[7];
+        return `
+          <div class="bg-white p-3.5 rounded-xl shadow-sm border border-slate-100 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-lg">${cat.icon}</div>
+              <div>
+                <div class="font-bold text-sm text-slate-800">${tx.note || cat.name}</div>
+                <div class="text-[11px] text-slate-400">${tx.date} • ${cat.name}</div>
+              </div>
+            </div>
+            <div class="flex items-center gap-3">
+              <span class="font-extrabold text-sm text-slate-800">${formatCurrency(tx.amount)}</span>
+              <button onclick="deleteTransaction('${tx.id}')" class="text-slate-300 hover:text-rose-500 text-xs">✕</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function deleteTransaction(id) {
+      state.transactions = state.transactions.filter(t => t.id !== id);
+      saveState();
+      renderAll();
+    }
+
+    function renderBudgetSettings() {
+      document.getElementById('inputIncome').value = state.income;
+      document.getElementById('inputFixed').value = state.fixed;
+
+      const available = Number(state.income || 0) - Number(state.fixed || 0);
+      document.getElementById('availableToAllocate').textContent = formatCurrency(available);
+
+      const container = document.getElementById('categoryBudgetsInputs');
+      container.innerHTML = CATEGORIES.map(cat => `
+        <div class="flex items-center justify-between gap-2">
+          <label class="text-xs font-semibold text-slate-700">${cat.icon} ${cat.name}</label>
+          <input type="number" data-cat="${cat.id}" value="${state.catBudgets[cat.id] || 0}" onchange="saveBudgetSettings()" class="cat-budget-input w-28 text-left border border-slate-200 rounded-lg px-2.5 py-1.5 text-sm font-bold bg-slate-50" />
+        </div>
+      `).join('');
+
+      const allocated = Object.values(state.catBudgets).reduce((a, b) => a + Number(b || 0), 0);
+      const unallocated = available - allocated;
+      const badge = document.getElementById('unallocatedBadge');
+      badge.textContent = `נותר לחלק: ${formatCurrency(unallocated)}`;
+      badge.className = `text-xs font-bold px-2 py-1 rounded ${unallocated < 0 ? 'bg-rose-100 text-rose-700' : 'bg-emerald-100 text-emerald-700'}`;
+    }
+
+    function saveBudgetSettings() {
+      state.income = Number(document.getElementById('inputIncome').value || 0);
+      state.fixed = Number(document.getElementById('inputFixed').value || 0);
+      document.querySelectorAll('.cat-budget-input').forEach(inp => {
+        state.catBudgets[inp.dataset.cat] = Number(inp.value || 0);
+      });
+      saveState();
+      renderAll();
+    }
+
+    function openAddModal() {
+      document.getElementById('quickAmount').value = '';
+      document.getElementById('quickNote').value = '';
+      document.getElementById('quickInstallments').value = '1';
+      const today = new Date().toISOString().split('T')[0];
+      document.getElementById('quickDate').value = today;
+      renderQuickCategories();
+      document.getElementById('addModal').classList.remove('hidden');
+      setTimeout(() => document.getElementById('quickAmount').focus(), 100);
+    }
+
+    function closeAddModal() {
+      document.getElementById('addModal').classList.add('hidden');
+    }
+
+    function renderQuickCategories() {
+      const grid = document.getElementById('quickCategoryGrid');
+      grid.innerHTML = CATEGORIES.map(cat => `
+        <button type="button" onclick="selectQuickCategory('${cat.id}')" class="p-2 rounded-xl border text-center flex flex-col items-center gap-1 transition ${selectedQuickCat === cat.id ? 'border-blue-600 bg-blue-50 text-blue-700 font-bold' : 'border-slate-200 text-slate-600'}">
+          <span class="text-xl">${cat.icon}</span>
+          <span class="text-[10px] leading-tight">${cat.name}</span>
+        </button>
+      `).join('');
+    }
+
+    function selectQuickCategory(id) {
+      selectedQuickCat = id;
+      renderQuickCategories();
+    }
+
+    function saveQuickExpense() {
+      const amount = Number(document.getElementById('quickAmount').value);
+      if (!amount || amount <= 0) return alert('נא להזין סכום תקין');
+      const note = document.getElementById('quickNote').value.trim();
+      const baseDate = document.getElementById('quickDate').value || new Date().toISOString().split('T')[0];
+      const installments = Number(document.getElementById('quickInstallments').value || 1);
+      const partAmount = Math.round((amount / installments) * 100) / 100;
+
+      const [y, m, d] = baseDate.split('-').map(Number);
+      for (let i = 0; i < installments; i++) {
+        const dt = new Date(y, m - 1 + i, d);
+        const dateStr = `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}`;
+        const label = installments > 1 ? `${note || 'הוצאה'} (תשלום ${i + 1}/${installments})` : note;
+        state.transactions.push({
+          id: 'tx_' + Date.now() + '_' + i,
+          amount: partAmount,
+          category: selectedQuickCat,
+          note: label,
+          date: dateStr
+        });
+      }
+      saveState();
+      closeAddModal();
+      renderAll();
+    }
+
+    // --- SMART FILE IMPORT (EXCEL / CSV) ---
+    function classifyMerchant(merchantName) {
+      const clean = merchantName.trim().toLowerCase();
+      if (state.learnedRules[clean]) return state.learnedRules[clean];
+      for (const [catId, words] of Object.entries(BUILTIN_KEYWORDS)) {
+        if (words.some(w => clean.includes(w.toLowerCase()))) return catId;
+      }
+      return null;
+    }
+
+    function normalizeDate(val) {
+      if (!val) return getMonthKey(currentYear, currentMonth) + '-01';
+      if (typeof val === 'number') {
+        const d = new Date(Math.round((val - 25569) * 86400 * 1000));
+        return d.toISOString().split('T')[0];
+      }
+      const str = String(val).trim();
+      const match = str.match(/(\d{1,2})[\/\.\-](\d{1,2})[\/\.\-](\d{2,4})/);
+      if (match) {
+        let day = match[1].padStart(2, '0');
+        let month = match[2].padStart(2, '0');
+        let year = match[3].length === 2 ? '20' + match[3] : match[3];
+        return `${year}-${month}-${day}`;
+      }
+      return getMonthKey(currentYear, currentMonth) + '-01';
+    }
+
+    function handleFileUpload(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const data = new Uint8Array(e.target.result);
+          const workbook = XLSX.read(data, { type: 'array' });
+          const sheet = workbook.Sheets[workbook.SheetNames[0]];
+          const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+          parseImportedRows(rows);
+        } catch (err) {
+          alert('שגיאה בקריאת הקובץ. ודא שמדובר בקובץ Excel או CSV תקין.');
+        }
+        event.target.value = '';
+      };
+      reader.readAsArrayBuffer(file);
+    }
+
+    function parseImportedRows(rows) {
+      let headerIdx = -1;
+      let dateCol = -1, nameCol = -1, amountCol = -1;
+
+      for (let i = 0; i < Math.min(rows.length, 25); i++) {
+        const row = rows[i].map(c => String(c || '').trim());
+        const dIdx = row.findIndex(c => c.includes('תאריך'));
+        const nIdx = row.findIndex(c => c.includes('שם בית') || c.includes('תיאור') || c.includes('פרטים') || c.includes('עסק'));
+        const aIdx = row.findIndex(c => c.includes('סכום חיוב') || c.includes('סכום עסקה') || c.includes('חובה') || c === 'סכום');
+        if (nIdx !== -1 && aIdx !== -1) {
+          headerIdx = i;
+          dateCol = dIdx !== -1 ? dIdx : 0;
+          nameCol = nIdx;
+          amountCol = aIdx;
+          break;
+        }
+      }
+
+      if (headerIdx === -1) {
+        alert('לא זוהו עמודות של שם עסק וסכום בקובץ. נסה לייצא קובץ פירוט עסקאות סטנדרטי.');
+        return;
+      }
+
+      pendingImportRows = [];
+      for (let i = headerIdx + 1; i < rows.length; i++) {
+        const r = rows[i];
+        if (!r || !r[nameCol]) continue;
+        const merchant = String(r[nameCol]).trim();
+        if (merchant.includes('סה"כ') || merchant.includes('סיכום')) continue;
+        const rawAmt = String(r[amountCol] || '').replace(/[^\d.\-]/g, '');
+        const amount = Math.abs(parseFloat(rawAmt));
+        if (!amount || isNaN(amount)) continue;
+
+        const date = normalizeDate(r[dateCol]);
+        const fingerprint = `${date}_${merchant}_${amount}`;
+        const exists = state.transactions.some(t => t.fingerprint === fingerprint);
+        if (exists) continue;
+
+        const detectedCat = classifyMerchant(merchant);
+        pendingImportRows.push({
+          merchant,
+          amount,
+          date,
+          fingerprint,
+          category: detectedCat,
+          needsQuery: !detectedCat
+        });
+      }
+
+      if (pendingImportRows.length === 0) {
+        alert('לא נמצאו תנועות חדשות לייבוא (ייתכן שכל התנועות בקובץ כבר קיימות במערכת).');
+        return;
+      }
+
+      openImportModal();
+    }
+
+    function openImportModal() {
+      const unknown = pendingImportRows.filter(r => r.needsQuery);
+      const autoCount = pendingImportRows.length - unknown.length;
+      document.getElementById('importSummaryText').textContent =
+        `זוהו ${autoCount} תנועות אוטומטית. ${unknown.length > 0 ? `נותרו ${unknown.length} תנועות לשיוך מהיר:` : 'הכל זוהה בהצלחה!'}`;
+
+      const list = document.getElementById('unknownMerchantsList');
+      if (unknown.length === 0) {
+        list.innerHTML = `<div class="text-center py-6 text-emerald-600 font-semibold text-sm">✨ כל בתי העסק בקובץ זוהו אוטומטית! לחץ למטה לאישור.</div>`;
+      } else {
+        list.innerHTML = unknown.map((item, idx) => `
+          <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-2">
+            <div class="flex justify-between items-center">
+              <span class="font-bold text-xs text-slate-800">${item.merchant}</span>
+              <span class="font-extrabold text-xs text-blue-600">${formatCurrency(item.amount)}</span>
+            </div>
+            <div class="flex flex-wrap gap-1.5">
+              ${CATEGORIES.map(c => `
+                <button type="button" onclick="assignImportCategory(${idx}, '${c.id}', this)" class="import-cat-btn-${idx} text-[11px] px-2 py-1 rounded-lg border bg-white hover:bg-blue-50 border-slate-200">
+                  ${c.icon} ${c.name}
+                </button>
+              `).join('')}
+            </div>
+          </div>
+        `).join('');
+      }
+      document.getElementById('importModal').classList.remove('hidden');
+    }
+
+    function assignImportCategory(unknownIdx, catId, btnEl) {
+      const unknown = pendingImportRows.filter(r => r.needsQuery);
+      const target = unknown[unknownIdx];
+      target.category = catId;
+      state.learnedRules[target.merchant.trim().toLowerCase()] = catId;
+
+      document.querySelectorAll(`.import-cat-btn-${unknownIdx}`).forEach(b => {
+        b.classList.remove('bg-blue-600', 'text-white', 'border-blue-600');
+        b.classList.add('bg-white', 'text-slate-700');
+      });
+      btnEl.classList.remove('bg-white', 'text-slate-700');
+      btnEl.classList.add('bg-blue-600', 'text-white', 'border-blue-600');
+    }
+
+    function closeImportModal() {
+      document.getElementById('importModal').classList.add('hidden');
+      pendingImportRows = [];
+    }
+
+    function confirmImport() {
+      pendingImportRows.forEach((item, i) => {
+        state.transactions.push({
+          id: 'imp_' + Date.now() + '_' + i,
+          amount: item.amount,
+          category: item.category || 'other',
+          note: item.merchant,
+          date: item.date,
+          fingerprint: item.fingerprint
+        });
+      });
+      saveState();
+      closeImportModal();
+      renderAll();
+      alert('התנועות יובאו בהצלחה!');
+    }
+
+    function exportCSV() {
+      let csv = '\uFEFFתאריך,קטגוריה,תיאור,סכום\n';
+      state.transactions.forEach(t => {
+        const cat = CATEGORIES.find(c => c.id === t.category)?.name || 'שונות';
+        csv += `${t.date},"${cat}","${t.note || ''}",${t.amount}\n`;
+      });
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `budget_export_${getMonthKey(currentYear, currentMonth)}.csv`;
+      a.click();
+    }
+
+    // Initialize on load
+    renderAll();
+  </script>
+</body>
+</html>
