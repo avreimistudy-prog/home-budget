@@ -61,7 +61,6 @@
 
       <!-- Fixed vs Variable Split Cards -->
       <div class="grid grid-cols-2 gap-2.5">
-        <!-- Incomes Split -->
         <div onclick="openIncomeTransactions()" class="cursor-pointer bg-white p-3.5 rounded-2xl border border-slate-100 shadow-sm hover:bg-emerald-50/30 transition">
           <div class="flex justify-between items-center text-[11px] text-slate-400 mb-1">
             <span>הכנסות החודש ◀</span>
@@ -74,7 +73,6 @@
           </div>
         </div>
 
-        <!-- Expenses Split -->
         <div class="bg-white p-3.5 rounded-2xl border border-slate-100 shadow-sm">
           <div class="flex justify-between items-center text-[11px] text-slate-400 mb-1">
             <span>הוצאות החודש</span>
@@ -211,7 +209,6 @@
         <button type="button" id="btnTypeIncome" onclick="setQuickTxType('income')" class="py-2 rounded-lg text-slate-500 transition">➕ הכנסה</button>
       </div>
 
-      <!-- Income Fixed/Variable Toggle -->
       <div id="quickIncomeNatureSection" class="hidden grid grid-cols-2 gap-2 bg-emerald-50 p-1.5 rounded-xl text-xs font-bold">
         <button type="button" id="btnIncFixed" onclick="setQuickIncomeNature('fixed')" class="py-1.5 rounded-lg bg-emerald-600 text-white shadow-sm">🔒 הכנסה קבועה (משכורת/קצבה)</button>
         <button type="button" id="btnIncVar" onclick="setQuickIncomeNature('variable')" class="py-1.5 rounded-lg text-emerald-700">🔄 הכנסה משתנה / חד-פעמית</button>
@@ -311,7 +308,7 @@
     </div>
   </div>
 
-  <!-- Create Custom Category Modal (With Fixed vs Variable Toggle) -->
+  <!-- Create Custom Category Modal -->
   <div id="newCategoryModal" class="fixed inset-0 bg-black/70 z-[60] hidden flex items-center justify-center p-4">
     <div class="bg-white w-full max-w-sm rounded-2xl p-5 space-y-4">
       <div class="flex justify-between items-center border-b pb-2">
@@ -358,7 +355,7 @@
       <div class="space-y-2">
         <button id="btnMatchExactAmount" onclick="resolveRecurringChoice('EXACT_AMOUNT')" class="w-full text-right p-3 rounded-xl border-2 border-blue-600 bg-blue-50 hover:bg-blue-100 transition">
           <div class="font-bold text-xs text-blue-800" id="lblExactAmount">שייך רק תנועות עם סכום זהה</div>
-          <div class="text-[11px] text-blue-600 mt-0.5">מתאים להוראות קבע או תשלומים קבועים בסכום מדויק</div>
+          <div class="text-[11px] text-blue-600 mt-0.5" id="subExactAmount">מתאים להוראות קבע או תשלומים קבועים בסכום מדויק</div>
         </button>
         <button id="btnMatchAllMerchant" onclick="resolveRecurringChoice('ALL_MERCHANT')" class="w-full text-right p-3 rounded-xl border border-slate-200 hover:bg-slate-50 transition">
           <div class="font-bold text-xs text-slate-800" id="lblAllMerchant">שייך את כל התנועות תחת שם העסק הזה</div>
@@ -401,7 +398,7 @@
     </div>
   </div>
 
-  <!-- Import Query Modal (With Pattern Learning & Smart Category Suggestions) -->
+  <!-- Import Query Modal -->
   <div id="importModal" class="fixed inset-0 bg-black/60 z-50 hidden flex items-center justify-center p-4">
     <div class="bg-white w-full max-w-md rounded-2xl p-5 max-h-[88vh] flex flex-col">
       <div class="flex justify-between items-center pb-2.5 border-b">
@@ -424,7 +421,7 @@
       </div>
 
       <div class="flex justify-between items-center pt-2">
-        <span class="text-[11px] text-slate-400">המערכת זיהתה דפוסים ומציעה קטגוריות חסרות:</span>
+        <span class="text-[11px] text-slate-400">המערכת מפרידה אוטומטית בין הוצאות להכנסות:</span>
         <button onclick="openNewCategoryModal()" class="text-xs bg-blue-50 text-blue-600 font-bold px-2.5 py-1 rounded-lg hover:bg-blue-100">+ קטגוריה חדשה</button>
       </div>
 
@@ -477,7 +474,6 @@
       leisure: ['סינמה', 'יס פלאנט', 'הופעה', 'מתנה', 'פרחים', 'ספא', 'מלון', 'טיול']
     };
 
-    // מנוע היסק קטגוריות חדשות לפי דפוסים בטקסט
     const SMART_DISCOVERY_PATTERNS = [
       { keywords: ['ביט', 'bit', 'פייבוקס', 'paybox'], suggestedName: 'העברות ביט / פייבוקס', icon: '💸', nature: 'variable' },
       { keywords: ['netflix', 'spotify', 'apple', 'google', 'amazon', 'youtube', 'chatgpt', 'openai', '.com'], suggestedName: 'מנויים דיגיטליים ותוכנה', icon: '📱', nature: 'fixed' },
@@ -486,7 +482,7 @@
       { keywords: ['אוניברסיטת', 'מכללת', 'שכר לימוד', 'קורס'], suggestedName: 'לימודים והשכלה', icon: '🎓', nature: 'fixed' }
     ];
 
-    const STORAGE_KEY = 'smart_budget_v9';
+    const STORAGE_KEY = 'smart_budget_v10';
     let currentYear = new Date().getFullYear();
     let currentMonth = new Date().getMonth();
     let selectedQuickCat = 'food';
@@ -632,7 +628,6 @@
       const expenseTxs = txs.filter(t => t.type !== 'income');
       const incomeTxs = txs.filter(t => t.type === 'income');
 
-      // Incomes: Fixed vs Variable
       let fixedInc = incomeTxs.filter(t => getTransactionNature(t) === 'fixed').reduce((s, t) => s + Number(t.amount || 0), 0);
       const varInc = incomeTxs.filter(t => getTransactionNature(t) === 'variable').reduce((s, t) => s + Number(t.amount || 0), 0);
       if (incomeTxs.length === 0 && Number(state.income || 0) > 0) {
@@ -640,17 +635,14 @@
       }
       const totalIncome = fixedInc + varInc;
 
-      // Expenses: Fixed vs Variable
       const fixedExp = expenseTxs.filter(t => getTransactionNature(t) === 'fixed').reduce((s, t) => s + Number(t.amount || 0), 0);
       const varExp = expenseTxs.filter(t => getTransactionNature(t) === 'variable').reduce((s, t) => s + Number(t.amount || 0), 0);
       const totalSpent = fixedExp + varExp;
       const balance = totalIncome - totalSpent;
 
-      // Variable Budget Calculation
       const variableCats = state.categories.filter(c => c.nature === 'variable');
       const fixedCats = state.categories.filter(c => c.nature === 'fixed');
       const allocatedVarBudget = variableCats.reduce((sum, c) => sum + Number(state.catBudgets[c.id] || 0), 0);
-      // אם לא הוגדר תקציב משתנות פרטני, מחשב יתרה פנויה = סך הכנסות פחות הוצאות קבועות בפועל
       const effectiveVarBudget = allocatedVarBudget > 0 ? allocatedVarBudget : Math.max(0, totalIncome - fixedExp);
       const remainingVar = effectiveVarBudget - varExp;
 
@@ -1079,9 +1071,11 @@
       if (state.learnedRules[amountSig]) return state.learnedRules[amountSig];
       if (state.learnedRules[clean]) return state.learnedRules[clean];
 
-      if (FIXED_INCOME_KEYWORDS.some(w => clean.includes(w.toLowerCase()))) return 'INCOME_FIXED';
-      if (VARIABLE_INCOME_KEYWORDS.some(w => clean.includes(w.toLowerCase()))) return 'INCOME_VAR';
-      if (isCreditColumn) return 'INCOME_VAR';
+      if (isCreditColumn) {
+        if (FIXED_INCOME_KEYWORDS.some(w => clean.includes(w.toLowerCase()))) return 'INCOME_FIXED';
+        if (VARIABLE_INCOME_KEYWORDS.some(w => clean.includes(w.toLowerCase()))) return 'INCOME_VAR';
+        return null; // אם הגיע מזכות ולא ידוע אם קבוע או משתנה — ישאל רק קבוע מול משתנה!
+      }
 
       for (const [catId, words] of Object.entries(BUILTIN_KEYWORDS)) {
         if (words.some(w => clean.includes(w.toLowerCase()))) return catId;
@@ -1091,14 +1085,15 @@
 
     function detectSmartSuggestion(merchantName, isCredit, recurringCount) {
       const clean = merchantName.trim().toLowerCase();
-      // בדיקה אם מתאים לאחת הקטגוריות המוצעות שעדיין לא קיימות אצל המשתמש
-      for (const pat of SMART_DISCOVERY_PATTERNS) {
-        if (pat.keywords.some(k => clean.includes(k))) {
-          const existingCat = state.categories.find(c => c.name === pat.suggestedName);
-          if (existingCat) {
-            return { type: 'EXISTING', catId: existingCat.id, label: `💡 הצעה חכמה: לשייך ל"${existingCat.name}"` };
-          } else {
-            return { type: 'NEW_CAT', pattern: pat, label: `💡 זוהה דפוס "${pat.suggestedName}" — צור קטגוריה ושייך` };
+      if (!isCredit) {
+        for (const pat of SMART_DISCOVERY_PATTERNS) {
+          if (pat.keywords.some(k => clean.includes(k))) {
+            const existingCat = state.categories.find(c => c.name === pat.suggestedName);
+            if (existingCat) {
+              return { type: 'EXISTING', catId: existingCat.id, label: `💡 הצעה חכמה: לשייך ל"${existingCat.name}"` };
+            } else {
+              return { type: 'NEW_CAT', pattern: pat, label: `💡 זוהה דפוס "${pat.suggestedName}" — צור קטגוריה ושייך` };
+            }
           }
         }
       }
@@ -1106,7 +1101,7 @@
         return {
           type: 'RECURRING',
           label: isCredit
-            ? `🔁 חוזר ${recurringCount} פעמים — מומלץ לסמן כהכנסה קבועה`
+            ? `🔁 חוזר ${recurringCount} פעמים בקובץ — כנראה הכנסה קבועה`
             : `🔁 חוזר ${recurringCount} פעמים בקובץ — כנראה הוצאה קבועה`
         };
       }
@@ -1291,12 +1286,12 @@
         return;
       }
 
-      // ספירת מחזוריות (Pattern Learning) לתנועות הלא מזוהות
       pendingImportRows.forEach(item => {
         if (!item.resolved) {
           const clean = item.merchant.trim().toLowerCase();
           const recurCount = pendingImportRows.filter(other =>
-            other.merchant.trim().toLowerCase() === clean || other.amount === item.amount
+            other.isCredit === item.isCredit &&
+            (other.merchant.trim().toLowerCase() === clean || other.amount === item.amount)
           ).length;
           item.suggestion = detectSmartSuggestion(item.merchant, item.isCredit, recurCount);
         }
@@ -1360,34 +1355,52 @@
             }
           }
 
+          // הפרדה נקייה: אם התנועה מעמודת זכות -> מציג רק אופציות הכנסה; אם מחובה -> מציג רק קטגוריות הוצאה!
+          const actionButtonsHtml = item.isCredit
+            ? `
+              <button type="button" onclick="assignImportCategory('${item.id}', 'INCOME_FIXED')" class="text-xs px-3 py-1.5 rounded-lg border font-bold bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border-emerald-300 transition">
+                🔒💰 הכנסה קבועה
+              </button>
+              <button type="button" onclick="assignImportCategory('${item.id}', 'INCOME_VAR')" class="text-xs px-3 py-1.5 rounded-lg border font-bold bg-teal-50 text-teal-700 hover:bg-teal-100 border-teal-300 transition">
+                🔄💰 הכנסה משתנה
+              </button>
+              <button type="button" onclick="assignImportCategory('${item.id}', 'EXCLUDE')" class="text-xs px-2.5 py-1.5 rounded-lg border bg-rose-50 text-rose-700 hover:bg-rose-100 border-rose-200 transition">
+                🚫 לא לכלול
+              </button>
+            `
+            : `
+              ${state.categories.map(c => `
+                <button type="button" onclick="assignImportCategory('${item.id}', '${c.id}')" class="text-[11px] px-2 py-1 rounded-lg border bg-white text-slate-700 hover:bg-blue-50 border-slate-200 transition">
+                  ${c.icon} ${c.name}
+                </button>
+              `).join('')}
+              <button type="button" onclick="assignImportCategory('${item.id}', 'EXCLUDE')" class="text-[11px] px-2 py-1 rounded-lg border bg-rose-50 text-rose-700 hover:bg-rose-100 border-rose-200 transition">
+                🚫 לא לכלול
+              </button>
+              <button type="button" onclick="openNewCategoryModal()" class="text-[11px] px-2 py-1 rounded-lg border border-dashed border-blue-400 bg-blue-50/70 text-blue-700 font-bold hover:bg-blue-100 transition">
+                + קטגוריה חדשה
+              </button>
+            `;
+
+          const typeBadge = item.isCredit
+            ? `<span class="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-100 text-emerald-700">➕ הכנסה (זכות)</span>`
+            : `<span class="text-[10px] font-bold px-2 py-0.5 rounded bg-rose-100 text-rose-700">➖ הוצאה (חובה)</span>`;
+
           return `
-            <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-2 transition-all">
-              <div class="flex justify-between items-center">
+            <div class="bg-slate-50 p-3 rounded-xl border ${item.isCredit ? 'border-emerald-200' : 'border-slate-200'} space-y-2 transition-all">
+              <div class="flex justify-between items-start">
                 <div>
+                  <div class="flex items-center gap-1.5 mb-0.5">
+                    ${typeBadge}
+                    <span class="text-[10px] text-slate-400">${item.date}</span>
+                  </div>
                   <span class="font-bold text-xs text-slate-800 block">${item.merchant}</span>
-                  <span class="text-[10px] text-slate-400">${item.date}</span>
                 </div>
-                <span class="font-extrabold text-xs text-blue-600">${formatCurrency(item.amount)}</span>
+                <span class="font-extrabold text-sm ${item.isCredit ? 'text-emerald-600' : 'text-blue-600'}">${formatCurrency(item.amount)}</span>
               </div>
               ${suggestionHtml}
               <div class="flex flex-wrap gap-1.5">
-                <button type="button" onclick="assignImportCategory('${item.id}', 'INCOME_FIXED')" class="text-[11px] px-2 py-1 rounded-lg border font-bold bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border-emerald-300 transition">
-                  🔒💰 הכנסה קבועה
-                </button>
-                <button type="button" onclick="assignImportCategory('${item.id}', 'INCOME_VAR')" class="text-[11px] px-2 py-1 rounded-lg border font-bold bg-teal-50 text-teal-700 hover:bg-teal-100 border-teal-300 transition">
-                  🔄💰 הכנסה משתנה
-                </button>
-                ${state.categories.map(c => `
-                  <button type="button" onclick="assignImportCategory('${item.id}', '${c.id}')" class="text-[11px] px-2 py-1 rounded-lg border bg-white text-slate-700 hover:bg-blue-50 border-slate-200 transition">
-                    ${c.icon} ${c.name}
-                  </button>
-                `).join('')}
-                <button type="button" onclick="assignImportCategory('${item.id}', 'EXCLUDE')" class="text-[11px] px-2 py-1 rounded-lg border bg-rose-50 text-rose-700 hover:bg-rose-100 border-rose-200 transition">
-                  🚫 לא לכלול
-                </button>
-                <button type="button" onclick="openNewCategoryModal()" class="text-[11px] px-2 py-1 rounded-lg border border-dashed border-blue-400 bg-blue-50/70 text-blue-700 font-bold hover:bg-blue-100 transition">
-                  + קטגוריה חדשה
-                </button>
+                ${actionButtonsHtml}
               </div>
             </div>
           `;
@@ -1399,7 +1412,7 @@
     function getCategoryDisplayName(catId) {
       if (catId === 'INCOME_FIXED') return 'הכנסה קבועה 🔒💰';
       if (catId === 'INCOME_VAR') return 'הכנסה משתנה 🔄💰';
-      if (catId === 'EXCLUDE') return 'לא לכלול בהוצאות';
+      if (catId === 'EXCLUDE') return 'לא לכלול';
       return state.categories.find(c => c.id === catId)?.name || '';
     }
 
@@ -1413,11 +1426,13 @@
       const sameMerchantRows = pendingImportRows.filter(r =>
         r.id !== target.id &&
         !r.resolved &&
+        r.isCredit === target.isCredit &&
         r.merchant.trim().toLowerCase() === cleanMerchant
       );
       const sameAmountRows = pendingImportRows.filter(r =>
         r.id !== target.id &&
         !r.resolved &&
+        r.isCredit === target.isCredit &&
         r.amount === target.amount
       );
 
