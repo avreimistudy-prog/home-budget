@@ -181,12 +181,12 @@
         </div>
       </div>
 
-      <!-- Manage & Edit Categories -->
+      <!-- Manage, Edit & Delete Categories -->
       <div class="bg-white dark:bg-slate-900 rounded-2xl p-4 shadow-sm border border-slate-200/70 dark:border-slate-800 space-y-3">
         <div class="flex justify-between items-center">
           <div>
             <h2 class="font-bold text-base">2. ניהול ועריכת קטגוריות ותקציב</h2>
-            <p class="text-[10px] text-slate-400">לחץ על ✏️ לעריכת שם/אייקון/מחיקה, או על 🔒/🔄 להחלפת סיווג</p>
+            <p class="text-[10px] text-slate-400">✏️ עריכת שם/אייקון • 🔒/🔄 קבוע/משתנה • 🗑️ מחיקה</p>
           </div>
           <button onclick="openNewCategoryModal()" class="text-xs bg-blue-600 text-white font-bold px-3 py-1.5 rounded-xl shadow-sm">+ חדשה</button>
         </div>
@@ -194,7 +194,7 @@
           <span class="font-semibold text-blue-800 dark:text-blue-300">יתרה לחלוקה מתוך ההכנסות:</span>
           <span id="unallocatedBadge" class="font-extrabold text-blue-700 dark:text-blue-400">₪0</span>
         </div>
-        <div id="categoryBudgetsInputs" class="space-y-2.5"></div>
+        <div id="categoryBudgetsInputs" class="space-y-2"></div>
       </div>
 
       <!-- Device Sync & Backup Section -->
@@ -351,7 +351,7 @@
     </div>
   </div>
 
-  <!-- Edit Existing Category Modal (NEW FEATURE) -->
+  <!-- Edit Existing Category Modal -->
   <div id="editCategoryModal" class="fixed inset-0 bg-black/70 z-[60] hidden flex items-center justify-center p-4">
     <div class="bg-white dark:bg-slate-900 w-full max-w-sm rounded-2xl p-5 space-y-4">
       <div class="flex justify-between items-center border-b dark:border-slate-800 pb-2">
@@ -1028,13 +1028,27 @@
       renderAll();
     }
 
-    // --- CATEGORY MANAGEMENT & EDITING (NEW) ---
+    // --- CATEGORY MANAGEMENT, EDITING & DIRECT DELETION ---
     function toggleCategoryNature(catId) {
       const cat = state.categories.find(c => c.id === catId);
       if (!cat) return;
       cat.nature = cat.nature === 'fixed' ? 'variable' : 'fixed';
       saveState();
       renderAll();
+    }
+
+    function quickDeleteCategory(catId) {
+      if (catId === 'other') return;
+      const cat = state.categories.find(c => c.id === catId);
+      if (!cat) return;
+      if (confirm(`למחוק את הקטגוריה "${cat.name}"?\nכל התנועות שבה יועברו אוטומטית ל"שונות".`)) {
+        state.transactions.forEach(t => { if (t.category === catId) t.category = 'other'; });
+        delete state.catBudgets[catId];
+        state.categories = state.categories.filter(c => c.id !== catId);
+        if (selectedQuickCat === catId) selectedQuickCat = 'other';
+        saveState();
+        renderAll();
+      }
     }
 
     function openEditCategoryModal(catId) {
@@ -1084,21 +1098,8 @@
 
     function deleteCategory() {
       const id = document.getElementById('editCatId').value;
-      if (id === 'other') return;
-      const cat = state.categories.find(c => c.id === id);
-      if (!cat) return;
-
-      if (confirm(`למחוק את הקטגוריה "${cat.name}"?\n(כל התנועות המשויכות אליה יועברו אוטומטית ל"שונות" ולא יימחקו)`)) {
-        state.transactions.forEach(t => {
-          if (t.category === id) t.category = 'other';
-        });
-        delete state.catBudgets[id];
-        state.categories = state.categories.filter(c => c.id !== id);
-        if (selectedQuickCat === id) selectedQuickCat = 'other';
-        saveState();
-        document.getElementById('editCategoryModal').classList.add('hidden');
-        renderAll();
-      }
+      document.getElementById('editCategoryModal').classList.add('hidden');
+      quickDeleteCategory(id);
     }
 
     function renderBudgetSettings() {
@@ -1107,16 +1108,23 @@
       const container = document.getElementById('categoryBudgetsInputs');
       container.innerHTML = state.categories.map(cat => {
         const isFixed = cat.nature === 'fixed';
+        const deleteBtn = cat.id !== 'other'
+          ? `<button type="button" onclick="quickDeleteCategory('${cat.id}')" title="מחק קטגוריה" class="p-1.5 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-950 text-slate-400 hover:text-rose-600 text-xs shrink-0 transition">🗑️</button>`
+          : `<span class="w-7 shrink-0"></span>`;
+
         return `
-          <div class="flex items-center justify-between gap-2 bg-slate-50/70 dark:bg-slate-800/50 p-2 rounded-xl">
+          <div class="flex items-center justify-between gap-1.5 bg-slate-50/80 dark:bg-slate-800/50 p-2 rounded-xl border border-slate-100 dark:border-slate-800">
             <div class="flex items-center gap-1.5 min-w-0">
-              <button type="button" onclick="openEditCategoryModal('${cat.id}')" title="ערוך קטגוריה" class="p-1 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-[11px] hover:border-blue-400 shrink-0">✏️</button>
+              <button type="button" onclick="openEditCategoryModal('${cat.id}')" title="ערוך שם או אייקון" class="p-1.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-[11px] hover:border-blue-400 shrink-0">✏️</button>
               <button type="button" onclick="toggleCategoryNature('${cat.id}')" title="לחץ להחלפה בין קבוע למשתנה" class="text-[10px] px-1.5 py-1 rounded-lg font-bold shrink-0 ${isFixed ? 'bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200' : 'bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-400'}">
                 ${isFixed ? '🔒' : '🔄'}
               </button>
               <span onclick="openEditCategoryModal('${cat.id}')" class="cursor-pointer text-xs font-semibold truncate">${cat.icon} ${cat.name}</span>
             </div>
-            <input type="number" data-cat="${cat.id}" value="${state.catBudgets[cat.id] || 0}" onchange="saveBudgetSettings()" class="cat-budget-input w-24 text-left border border-slate-200 dark:border-slate-700 rounded-lg px-2 py-1.5 text-sm font-bold bg-white dark:bg-slate-900 shrink-0" />
+            <div class="flex items-center gap-1 shrink-0">
+              <input type="number" data-cat="${cat.id}" value="${state.catBudgets[cat.id] || 0}" onchange="saveBudgetSettings()" class="cat-budget-input w-20 text-left border border-slate-200 dark:border-slate-700 rounded-lg px-2 py-1 text-sm font-bold bg-white dark:bg-slate-900" />
+              ${deleteBtn}
+            </div>
           </div>
         `;
       }).join('');
